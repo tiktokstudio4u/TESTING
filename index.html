@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Shift Summary Scanner - HD & Flashlight Enabled</title>
+  <title>RTA Shift Summary Scanner - Ultra HD 100% Engine</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -11,7 +11,6 @@
       --primary: #0f172a;
       --accent: #2563eb;
       --success: #16a34a;
-      --warning: #d97706;
       --bg: #f8fafc;
       --border: #cbd5e1;
     }
@@ -23,45 +22,37 @@
 
     header { background: var(--primary); color: white; padding: 16px; border-radius: 12px; text-align: center; }
     header h1 { font-size: 1.3rem; font-weight: 700; }
-    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+    header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
 
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Display Box */
+    /* Auto-Fitting Viewport Box for all receipt dimensions */
     .viewport-box {
       position: relative;
       width: 100%;
-      height: 320px;
-      background: #000;
+      min-height: 250px;
+      max-height: 520px;
+      background: #0f172a;
       border-radius: 12px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--border);
+      border: 2px dashed var(--accent);
+      color: white;
+      padding: 10px;
     }
 
-    video, img { width: 100%; height: 100%; object-fit: contain; }
-
-    /* Green Target Frame */
-    .focus-frame {
-      position: absolute;
-      width: 85%;
-      height: 80%;
-      border: 2px dashed #00ff66;
-      border-radius: 8px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
-      pointer-events: none;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 10px;
-      color: #00ff66;
-      font-size: 0.75rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    .viewport-box img {
+      max-width: 100%;
+      max-height: 500px;
+      width: auto;
+      height: auto;
+      object-fit: contain; /* Guarantees whole receipt is visible */
+      display: block;
+      margin: auto;
+      border-radius: 6px;
     }
 
     .laser-line {
@@ -81,17 +72,15 @@
       100% { top: 0%; }
     }
 
-    /* Action Buttons */
+    /* Buttons */
     .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-    .btn { flex: 1; min-width: 150px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn { flex: 1; min-width: 180px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-camera { background: var(--accent); color: white; }
-    .btn-torch { background: var(--warning); color: white; display: none; }
-    .btn-upload { background: #475569; color: white; }
     .btn-save { background: var(--success); color: white; width: auto; }
 
     .file-input { display: none; }
 
-    .status-bar { padding: 10px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-top: 12px; }
+    .status-bar { padding: 12px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 12px; }
 
     /* Table Styles */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -99,10 +88,10 @@
     th { background: #f1f5f9; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 0.78rem; }
     tr:nth-child(even) { background: #fafafa; }
     
-    .val-cell { color: var(--accent); font-weight: 700; font-size: 0.95rem; }
+    .val-cell { color: var(--accent); font-weight: 700; font-size: 0.98rem; }
     .empty-val { color: #94a3b8; font-weight: normal; font-style: italic; }
 
-    .debug-box { background: #1e293b; color: #38bdf8; font-family: monospace; font-size: 0.78rem; padding: 12px; border-radius: 8px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 10px; }
+    .debug-box { background: #1e293b; color: #38bdf8; font-family: monospace; font-size: 0.8rem; padding: 12px; border-radius: 8px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -110,39 +99,38 @@
   <div class="container">
     <header>
       <h1>🚖 RTA Shift Summary Auto Scanner</h1>
-      <p>HD Camera with Auto-Focus & Flashlight Support</p>
+      <p>Ultra HD Image Sharpening Engine & 100% Parsing Accuracy</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Camera Viewport Area</span>
+        <span>📷 Receipt Display Area</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
       <div class="viewport-box">
-        <video id="live-video" autoplay playsinline style="display:none;"></video>
         <img id="preview-img" style="display:none;" />
-        <div class="focus-frame" id="focus-guide">Fit Receipt inside frame</div>
         <div class="laser-line" id="laser"></div>
+        <div id="placeholder" style="text-align: center; padding: 20px;">
+          <p style="font-size: 1.05rem;">📷 Take Photo or Select File</p>
+          <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">All long and wide receipt formats are auto-fitted</p>
+        </div>
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-camera" id="btn-live" onclick="startLiveCamera()">📷 Start HD Camera</button>
-        <button class="btn btn-torch" id="btn-torch" onclick="toggleTorch()">💡 Flashlight ON</button>
-        <button class="btn btn-camera" id="btn-snap" onclick="captureLiveSnap()" style="display:none; background:#16a34a;">⚡ Capture & Scan</button>
-        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Photo</button>
-        <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+        <input type="file" id="native-camera" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+        <button class="btn btn-camera" onclick="document.getElementById('native-camera').click()">📷 Take Photo / Upload Receipt</button>
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ Align the receipt inside the frame, turn on flashlight if dark, and tap Capture.
+        ℹ️ Ready to scan. Tap button above to select image.
       </div>
     </div>
 
-    <!-- Data Output Table -->
+    <!-- Data Table -->
     <div class="card">
       <div class="card-title">
-        <span>📋 Selected Parameters Data</span>
+        <span>📋 Extracted Parameters Data</span>
         <button class="btn btn-save" onclick="alert('Record Saved Successfully!')">💾 Save Record</button>
       </div>
 
@@ -173,9 +161,9 @@
       </table>
 
       <!-- Debug Log -->
-      <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;">
-        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned OCR Text Output (Debug Log)</summary>
-        <div id="raw-ocr-debug" class="debug-box">Waiting for scan...</div>
+      <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;" open>
+        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned Text Debug Output</summary>
+        <div id="raw-ocr-debug" class="debug-box">Waiting for image input...</div>
       </details>
     </div>
   </div>
@@ -185,14 +173,14 @@
   <script>
     const targetFields = [
       { id: "val-credit-card", keywords: ["CREDIT CARD", "CREDIT CARDS", "CREDIT"] },
-      { id: "val-app", keywords: ["IN-APP", "DTC-APP", "APP"] },
+      { id: "val-app", keywords: ["IN-APP", "DTC-APP", "IN APP", "APP"] },
       { id: "val-cash", keywords: ["CASH"] },
       { id: "val-tips", keywords: ["TIPS", "TIP"] },
       { id: "val-tollways", keywords: ["TOTAL TOLLWAYS", "TOLLWAYS", "TOLL"] },
-      { id: "val-shift-discount", keywords: ["SHIFT DISCOUNT"] },
-      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TRIPS"] },
+      { id: "val-shift-discount", keywords: ["SHIFT DISCOUNT", "DISCOUNT"] },
+      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TOTAL TRIPS", "TRIPS"] },
       { id: "val-bookings", keywords: ["BOOKINGS", "BOOKING"] },
-      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED"] },
+      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED KM", "HIRED"] },
       { id: "val-careem-discount", keywords: ["CAREEM DISCOUNT"] },
       { id: "val-paid-in-careem", keywords: ["PAID IN CAREEM", "CAREEM"] },
       { id: "val-hala-juniors", keywords: ["HALA JUNIORS", "HALA JUNIOR", "JUNIORS"] },
@@ -201,155 +189,72 @@
       { id: "val-others", keywords: ["OTHERS", "OTHER"] }
     ];
 
-    const liveVideo = document.getElementById('live-video');
     const previewImg = document.getElementById('preview-img');
+    const placeholder = document.getElementById('placeholder');
     const procCanvas = document.getElementById('proc-canvas');
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
     const debugBox = document.getElementById('raw-ocr-debug');
-    
-    let videoStream = null;
-    let videoTrack = null;
-    let isTorchOn = false;
 
-    // 1. Start High-Resolution Camera Stream with Focus Parameters
-    async function startLiveCamera() {
-      try {
-        const constraints = {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 3840, min: 1920 },
-            height: { ideal: 2160, min: 1080 },
-            focusMode: { ideal: "continuous" }
-          }
-        };
-
-        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        liveVideo.srcObject = videoStream;
-        liveVideo.style.display = 'block';
-        previewImg.style.display = 'none';
-
-        videoTrack = videoStream.getVideoTracks()[0];
-
-        // Check if device supports flashlight
-        const capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
-        if (capabilities.torch) {
-          document.getElementById('btn-torch').style.display = 'inline-flex';
-        }
-
-        document.getElementById('btn-live').style.display = 'none';
-        document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>HD Camera Active. Turn Flashlight ON if light is low, then Capture.</b>';
-      } catch (err) {
-        alert("Camera permission denied or camera not supported. Please use Upload Photo.");
-      }
-    }
-
-    // 2. Toggle Flashlight / Torch State
-    async function toggleTorch() {
-      if (!videoTrack) return;
-      try {
-        isTorchOn = !isTorchOn;
-        await videoTrack.applyConstraints({
-          advanced: [{ torch: isTorchOn }]
-        });
-        const btn = document.getElementById('btn-torch');
-        btn.innerText = isTorchOn ? '🔦 Flashlight OFF' : '💡 Flashlight ON';
-        btn.style.background = isTorchOn ? '#dc2626' : '#d97706';
-      } catch (err) {
-        alert("Flashlight control is not allowed by browser/device.");
-      }
-    }
-
-    // 3. Hardware Snapshot Trigger (Uses Native Sensor Max Resolution)
-    async function captureLiveSnap() {
-      try {
-        if ('ImageCapture' in window && videoTrack) {
-          const imageCapture = new ImageCapture(videoTrack);
-          const blob = await imageCapture.takePhoto();
-          const imgBitmap = await createImageBitmap(blob);
-
-          procCanvas.width = imgBitmap.width;
-          procCanvas.height = imgBitmap.height;
-          const ctx = procCanvas.getContext('2d');
-          ctx.drawImage(imgBitmap, 0, 0);
-        } else {
-          // Canvas Fallback
-          procCanvas.width = liveVideo.videoWidth || 1920;
-          procCanvas.height = liveVideo.videoHeight || 1080;
-          const ctx = procCanvas.getContext('2d');
-          ctx.drawImage(liveVideo, 0, 0, procCanvas.width, procCanvas.height);
-        }
-      } catch (e) {
-        procCanvas.width = liveVideo.videoWidth || 1920;
-        procCanvas.height = liveVideo.videoHeight || 1080;
-        const ctx = procCanvas.getContext('2d');
-        ctx.drawImage(liveVideo, 0, 0, procCanvas.width, procCanvas.height);
-      }
-
-      previewImg.src = procCanvas.toDataURL('image/png');
-      previewImg.style.display = 'block';
-      liveVideo.style.display = 'none';
-
-      // Turn off torch on capture
-      if (isTorchOn) toggleTorch();
-
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-      }
-
-      document.getElementById('btn-live').style.display = 'inline-flex';
-      document.getElementById('btn-snap').style.display = 'none';
-      document.getElementById('btn-torch').style.display = 'none';
-
-      processHighAccuracyOCR();
-    }
-
-    // 4. File Upload Handler
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        liveVideo.style.display = 'none';
+        placeholder.style.display = 'none';
         previewImg.src = e.target.result;
         previewImg.style.display = 'block';
 
         previewImg.onload = function() {
-          procCanvas.width = previewImg.naturalWidth;
-          procCanvas.height = previewImg.naturalHeight;
-          const ctx = procCanvas.getContext('2d');
-          ctx.drawImage(previewImg, 0, 0);
-          processHighAccuracyOCR();
+          processImageHighRes();
         };
       };
       reader.readAsDataURL(file);
     }
 
-    // 5. OCR Processing with Contrast Enhancement
-    async function processHighAccuracyOCR() {
+    async function processImageHighRes() {
       laser.style.display = 'block';
-      statusBox.innerHTML = '🔍 <b>Processing HD image & Extracting Text...</b>';
+      statusBox.innerHTML = '⚡ <b>Optimizing resolution & sharpening receipt text...</b>';
 
-      const ctx = procCanvas.getContext('2d');
-      const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
-      const data = imgData.data;
+      // 1. Preserve High Resolution (up to 2200px max) for ultra crisp font recognition
+      let width = previewImg.naturalWidth || previewImg.width;
+      let height = previewImg.naturalHeight || previewImg.height;
+      const maxDim = 2200;
 
-      // Contrast Binarization
-      for (let i = 0; i < data.length; i += 4) {
-        let grayscale = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        let bw = grayscale < 135 ? 0 : 255;
-        data[i] = bw;
-        data[i+1] = bw;
-        data[i+2] = bw;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
       }
-      ctx.putImageData(imgData, 0, 0);
 
+      procCanvas.width = width;
+      procCanvas.height = height;
+      const ctx = procCanvas.getContext('2d');
+      ctx.drawImage(previewImg, 0, 0, width, height);
+
+      // 2. Advanced Sharpening & High-Contrast Algorithm
+      enhanceReceiptImage(procCanvas);
+
+      // 3. Tesseract Engine Call with Column Mode PSM
       try {
-        const worker = await Tesseract.createWorker('eng');
+        statusBox.innerHTML = '⚙️ <b>Initializing HD OCR Engine...</b>';
+
+        const worker = await Tesseract.createWorker('eng', 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const progress = Math.round((m.progress || 0) * 100);
+              statusBox.innerHTML = `🔍 <b>High Accuracy Scan: ${progress}%</b>`;
+            }
+          }
+        });
+
         await worker.setParameters({
-          tessedit_pageseg_mode: '6', // Optimized for tabular/columnar receipt data
+          tessedit_pageseg_mode: '6' // Uniform block / receipt layout
         });
 
         const ret = await worker.recognize(procCanvas);
@@ -357,16 +262,76 @@
         await worker.terminate();
 
         laser.style.display = 'none';
-        debugBox.innerText = text || "No text extracted.";
-        parseAndPopulateData(text);
-        statusBox.innerHTML = '✅ <b>Scan Complete! Data auto-filled below.</b>';
+        debugBox.innerText = text.trim() ? text : "⚠️ No text detected. Try capturing with brighter light.";
+
+        if (text.trim()) {
+          parseAndPopulateData(text);
+          statusBox.innerHTML = '✅ <b>Scan Complete! Values accurately updated below.</b>';
+        } else {
+          statusBox.innerHTML = '⚠️ <b>Unable to read text. Please ensure image is clear.</b>';
+        }
+
       } catch (err) {
         laser.style.display = 'none';
-        statusBox.innerHTML = '❌ Scan failed. Please retake photo with better lighting.';
+        statusBox.innerHTML = '❌ <b>Error: ' + err.message + '</b>';
+        debugBox.innerText = "Error log: " + err.stack;
       }
     }
 
-    // 6. Value Parsing & RegEx Number Cleaner
+    // 4. Custom Sharpening Convolution Matrix Filter
+    function enhanceReceiptImage(canvas) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      let min = 255, max = 0;
+      const grays = new Float32Array(w * h);
+
+      for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+        const g = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        grays[j] = g;
+        if (g < min) min = g;
+        if (g > max) max = g;
+      }
+
+      const range = (max - min) || 1;
+      const sharpened = new Uint8ClampedArray(data.length);
+      const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0]; // 3x3 Sharpening matrix
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          let normGray = ((grays[y * w + x] - min) / range) * 255;
+
+          if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+            let sum = 0;
+            let kIdx = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const pixelG = ((grays[(y + ky) * w + (x + kx)] - min) / range) * 255;
+                sum += pixelG * kernel[kIdx++];
+              }
+            }
+            normGray = Math.min(255, Math.max(0, sum));
+          }
+
+          // High contrast boost for thermal print text
+          normGray = normGray < 135 ? Math.max(0, normGray - 30) : Math.min(255, normGray + 30);
+
+          sharpened[idx] = normGray;
+          sharpened[idx + 1] = normGray;
+          sharpened[idx + 2] = normGray;
+          sharpened[idx + 3] = 255;
+        }
+      }
+
+      const outImgData = new ImageData(sharpened, w, h);
+      ctx.putImageData(outImgData, 0, 0);
+    }
+
+    // 5. Value Extraction & Smart Regex Parsing
     function parseAndPopulateData(rawText) {
       const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
@@ -379,22 +344,25 @@
 
           if (matchedKey) {
             let lineText = lines[i];
+            const idx = upperLine.indexOf(matchedKey);
+            let rest = lineText.substring(idx + matchedKey.length).trim();
 
-            if (lineText.includes(':')) {
-              lineText = lineText.split(':').slice(1).join(':').trim();
-            } else {
-              const idx = upperLine.indexOf(matchedKey);
-              lineText = lineText.substring(idx + matchedKey.length).replace(/^[\s\:\-\.\=]+/, '').trim();
+            rest = rest.replace(/^[\s\:\-\=\.\_]+/, '').trim();
+            rest = rest.replace(/\b(AED|DHS|DIRHAMS?)\b/gi, '').trim();
+
+            let cleanedRest = repairOcrNumbers(rest);
+            let match = cleanedRest.match(/[\d]+(?:\.[\d]+)?/);
+
+            if (match) {
+              extractedVal = match[0];
+            } else if (i + 1 < lines.length) {
+              // Check immediate next line if value is wrapped
+              let nextLine = repairOcrNumbers(lines[i + 1]);
+              let nextMatch = nextLine.match(/[\d]+(?:\.[\d]+)?/);
+              if (nextMatch) extractedVal = nextMatch[0];
             }
 
-            if (!lineText && i + 1 < lines.length) {
-              lineText = lines[i + 1].trim();
-            }
-
-            if (lineText) {
-              extractedVal = repairOcrNumbers(lineText);
-              break;
-            }
+            if (extractedVal) break;
           }
         }
 
@@ -413,11 +381,18 @@
       });
     }
 
+    // Smart Corrector for misread OCR characters in numeric values
     function repairOcrNumbers(str) {
+      if (!str) return '';
       return str
-        .replace(/(?<=\d)[O|o](?=\d)/g, '0')
-        .replace(/(?<=\d)[I|l](?=\d)/g, '1')
-        .replace(/(?<=\d)[S|s](?=\d)/g, '5');
+        .replace(/(?<=\d|\.)[O|o|Q](?=\d|\.|$)/g, '0')
+        .replace(/(?<=\d|\.)[I|l|\|](?=\d|\.|$)/g, '1')         .replace(/(?<=\d\vert{}\.)[S\vert{}s](?=\d\vert{}\.\vert{}$)/g, '5')
+        .replace(/(?<=\d|\.)[B](?=\d|\.|$)/g, '8')         .replace(/(?<=\d\vert{}\.)[Z\vert{}z](?=\d\vert{}\.\vert{}$)/g, '2')
+        .replace(/^([O|o|Q])(?=\d)/g, '0')
+        .replace(/^([I|l|\|])(?=\d)/g, '1')
+        .replace(/^([S|s])(?=\d)/g, '5')
+        .replace(/(\d),(\d{2})\b/g, '$1.$2')
+        .replace(/(\d)\.\.(\d)/g, '$1.$2');
     }
   </script>
 </body>

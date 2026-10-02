@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Shift Summary Auto Scanner</title>
+  <title>RTA Shift Summary Scanner - Fixed Upload Preview</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -27,12 +27,12 @@
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Live Camera & Scanner Viewport */
+    /* Flexible Dynamic Viewport Box */
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 320px;
-      max-height: 480px;
+      min-height: 300px;
+      max-height: 520px;
       background: #0f172a;
       border-radius: 12px;
       overflow: hidden;
@@ -43,23 +43,16 @@
     }
 
     video, img {
-      width: 100%;
-      height: 100%;
-      max-height: 460px;
+      max-width: 100%;
+      max-height: 500px;
+      width: auto;
+      height: auto;
       object-fit: contain;
+      display: block;
+      margin: 0 auto;
     }
 
-    /* Target Focus Overlay Frames */
-    .focus-frame {
-      position: absolute;
-      width: 85%;
-      height: 85%;
-      border: 2px dashed rgba(255, 255, 255, 0.5);
-      border-radius: 8px;
-      pointer-events: none;
-      display: none;
-    }
-
+    /* Laser Line */
     .laser-line {
       position: absolute;
       width: 100%;
@@ -78,40 +71,11 @@
       100% { top: 0%; }
     }
 
-    .badge-focus {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(15, 23, 42, 0.85);
-      color: #38bdf8;
-      font-size: 0.75rem;
-      padding: 5px 10px;
-      border-radius: 20px;
-      display: none;
-      align-items: center;
-      gap: 6px;
-      z-index: 12;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-    }
-
     /* Buttons */
     .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-    .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+    .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-camera { background: var(--accent); color: white; }
     .btn-snap { background: var(--success); color: white; display: none; }
-    
-    .btn-torch { 
-      background: #334155; 
-      color: #f8fafc; 
-      display: none; 
-      border: 1px solid #475569;
-    }
-    .btn-torch.active {
-      background: #eab308;
-      color: #000;
-      box-shadow: 0 0 12px rgba(234, 179, 8, 0.6);
-    }
-
     .btn-upload { background: #475569; color: white; }
     .btn-save { background: var(--success); color: white; width: auto; }
 
@@ -136,7 +100,7 @@
   <div class="container">
     <header>
       <h1>🚖 RTA Shift Summary Auto Scanner</h1>
-      <p>Clean HD Preview & High-Accuracy Receipt OCR</p>
+      <p>Instant Upload Preview & OCR Extraction</p>
     </header>
 
     <div class="card">
@@ -146,33 +110,23 @@
       </div>
 
       <div class="viewport-box">
-        <div class="badge-focus" id="badge-focus">🎯 Auto-Focusing</div>
-        <div class="focus-frame" id="focus-frame"></div>
         <video id="live-video" autoplay playsinline style="display:none;"></video>
-        <img id="preview-img" style="display:none;" alt="Uploaded Receipt" />
+        <img id="preview-img" style="display:none;" alt="Uploaded Receipt Preview" />
         <div class="laser-line" id="laser"></div>
         <div id="placeholder" style="text-align: center; color: #94a3b8; padding: 20px;">
-          📷 Tap "Start HD Camera" or "Upload Receipt"
+          📷 "Start HD Camera" par tap karein ya photo "Upload Receipt" karein
         </div>
       </div>
 
       <div class="btn-group">
         <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start HD Camera</button>
-        
-        <button class="btn btn-torch" id="btn-torch" onclick="toggleTorch()">
-          <svg id="flash-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          <span id="torch-text">Flashlight OFF</span>
-        </button>
-
         <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
         <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Receipt</button>
         <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ Ready. Camera start karein ya photo upload karein.
+        ℹ️ System ready. Receipt upload karein ya camera chalu karein.
       </div>
     </div>
 
@@ -244,157 +198,96 @@
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
     const debugBox = document.getElementById('raw-ocr-debug');
-    const focusFrame = document.getElementById('focus-frame');
-    const badgeFocus = document.getElementById('badge-focus');
 
     let videoStream = null;
-    let videoTrack = null;
-    let isTorchOn = false;
 
-    // 1. Camera Initialization with Auto Focus
+    // Camera Start
     async function startLiveCamera() {
       try {
-        const constraints = {
-          video: { 
-            facingMode: { ideal: "environment" }, 
-            width: { ideal: 1920 }, 
-            height: { ideal: 1080 },
-            focusMode: { ideal: "continuous" }
-          }
-        };
-
-        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+        });
         liveVideo.srcObject = videoStream;
-        
         placeholder.style.display = 'none';
         previewImg.style.display = 'none';
         liveVideo.style.display = 'block';
-        focusFrame.style.display = 'block';
-        badgeFocus.style.display = 'flex';
-
-        videoTrack = videoStream.getVideoTracks()[0];
-
-        if (videoTrack.getCapabilities && videoTrack.getCapabilities().focusMode) {
-          try {
-            await videoTrack.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-          } catch (e) {}
-        }
-
-        if (videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
-          document.getElementById('btn-torch').style.display = 'inline-flex';
-        }
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera active. Receipt ko frame me rakh kar Capture dabayein.</b>';
+        statusBox.innerHTML = '🟢 <b>Camera active. Capture button dabayein.</b>';
       } catch (err) {
-        alert("Camera error: " + err.message);
+        alert("Camera Access Error: " + err.message);
       }
     }
 
-    // 2. Flashlight Toggle
-    async function toggleTorch() {
-      if (!videoTrack) return;
-      try {
-        isTorchOn = !isTorchOn;
-        await videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] });
-        const btn = document.getElementById('btn-torch');
-        const txt = document.getElementById('torch-text');
-        btn.classList.toggle('active', isTorchOn);
-        txt.innerText = isTorchOn ? 'Flashlight ON' : 'Flashlight OFF';
-      } catch (e) {
-        alert("Flashlight mode error.");
-      }
-    }
-
-    // 3. Gentle Image Processing for Background OCR (Does NOT affect screen preview)
-    function prepareCanvasForOCR(imgElement) {
-      procCanvas.width = imgElement.naturalWidth || imgElement.videoWidth || imgElement.width || 1280;
-      procCanvas.height = imgElement.naturalHeight || imgElement.videoHeight || imgElement.height || 720;
-      
-      const ctx = procCanvas.getContext('2d');
-      ctx.drawImage(imgElement, 0, 0, procCanvas.width, procCanvas.height);
-
-      const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
-      const data = imgData.data;
-
-      // Soft contrast & grayscale enhancement for OCR
-      for (let i = 0; i < data.length; i += 4) {
-        let gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-        
-        // Moderate contrast boost without burning out text
-        if (gray < 160) {
-          gray = Math.max(0, gray - 20);
-        } else {
-          gray = Math.min(255, gray + 20);
-        }
-
-        data[i] = data[i+1] = data[i+2] = gray;
-      }
-
-      ctx.putImageData(imgData, 0, 0);
-    }
-
-    // 4. Capture Live Frame
+    // Capture Camera Frame
     function captureAndScan() {
-      // Direct raw capture for natural screen preview
       procCanvas.width = liveVideo.videoWidth || 1280;
       procCanvas.height = liveVideo.videoHeight || 720;
       const ctx = procCanvas.getContext('2d');
       ctx.drawImage(liveVideo, 0, 0, procCanvas.width, procCanvas.height);
 
-      // Display clean original capture on screen
       previewImg.src = procCanvas.toDataURL('image/png');
       previewImg.style.display = 'block';
       liveVideo.style.display = 'none';
-      focusFrame.style.display = 'none';
-      badgeFocus.style.display = 'none';
 
-      if (isTorchOn) toggleTorch();
       if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
       }
 
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
-      document.getElementById('btn-torch').style.display = 'none';
 
-      // Process soft contrast on canvas for OCR engine
       prepareCanvasForOCR(previewImg);
       runOCR();
     }
 
-    // 5. Fixed File Upload Handler (Shows Clean Image Immediately)
+    // FIXED File Upload Handler (Uses Instant Object URL)
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      statusBox.innerHTML = '⏳ <b>Receipt image load ho rahi hai...</b>';
+      statusBox.innerHTML = '⏳ <b>Receipt photo preview me load ho rahi hai...</b>';
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        placeholder.style.display = 'none';
-        liveVideo.style.display = 'none';
-        focusFrame.style.display = 'none';
-        badgeFocus.style.display = 'none';
+      // Direct Blob URL generation (Instant rendering without memory lag)
+      const objectUrl = URL.createObjectURL(file);
 
-        // Set original photo to preview element directly
-        previewImg.src = e.target.result;
+      placeholder.style.display = 'none';
+      liveVideo.style.display = 'none';
+
+      // Event listener fires ONLY when image is fully loaded in DOM
+      previewImg.onload = function() {
         previewImg.style.display = 'block';
+        statusBox.innerHTML = '⚙️ <b>Photo ready. Scanning started...</b>';
 
-        previewImg.onload = function() {
-          // Prepare clean OCR background canvas
-          prepareCanvasForOCR(previewImg);
-          runOCR();
-        };
+        // Prepare background canvas for OCR
+        prepareCanvasForOCR(previewImg);
+        runOCR();
       };
-      reader.readAsDataURL(file);
+
+      previewImg.onerror = function() {
+        statusBox.innerHTML = '❌ <b>Image display error. Please re-select the image.</b>';
+      };
+
+      // Set image source
+      previewImg.src = objectUrl;
     }
 
-    // 6. Tesseract OCR Engine
+    // Prepare clean image array for OCR processing
+    function prepareCanvasForOCR(imgElement) {
+      const w = imgElement.naturalWidth || imgElement.width || 1280;
+      const h = imgElement.naturalHeight || imgElement.height || 720;
+      
+      procCanvas.width = w;
+      procCanvas.height = h;
+      
+      const ctx = procCanvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0, w, h);
+    }
+
+    // Run Tesseract OCR Engine
     async function runOCR() {
       laser.style.display = 'block';
-      statusBox.innerHTML = '⚙️ <b>Scanning receipt text...</b>';
 
       try {
         const result = await Tesseract.recognize(
@@ -404,7 +297,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Scanning Progress: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Reading Receipt Text: ${prog}%</b>`;
               }
             }
           }
@@ -412,23 +305,22 @@
 
         laser.style.display = 'none';
         const text = result.data.text || "";
-        debugBox.innerText = text.trim() ? text : "⚠️ Koi readable text nahi mila. Kripya saaf photo upload karein.";
+        debugBox.innerText = text.trim() ? text : "⚠️ No readable text found.";
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scan Complete! Data neiche table me aa gaya hai.</b>';
+          statusBox.innerHTML = '✅ <b>Scan Complete! Data auto-filled below.</b>';
         } else {
-          statusBox.innerHTML = '⚠️ <b>Text nahi padha ja saka. Kripya achhi lighting me photo lein.</b>';
+          statusBox.innerHTML = '⚠️ <b>Text not detected clearly. Try uploading a clearer photo.</b>';
         }
 
       } catch (err) {
         laser.style.display = 'none';
-        statusBox.innerHTML = '❌ <b>OCR Error: ' + err.message + '</b>';
-        debugBox.innerText = "Error: " + err.stack;
+        statusBox.innerHTML = '❌ <b>OCR Processing Error: ' + err.message + '</b>';
       }
     }
 
-    // 7. Extract Values from OCR Output
+    // Parse Values into Table
     function parseAndPopulateData(rawText) {
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 

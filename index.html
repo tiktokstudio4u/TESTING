@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Auto-Crop & AI Scanner</title>
+  <title>RTA Auto-Crop & High-Contrast OCR</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -42,7 +42,7 @@
       position: relative;
       width: 100%;
       min-height: 260px;
-      max-height: 400px;
+      max-height: 420px;
       background: #0f172a;
       border-radius: 12px;
       overflow: hidden;
@@ -68,7 +68,7 @@
 
     video, img {
       max-width: 100%;
-      max-height: 380px;
+      max-height: 400px;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -94,7 +94,7 @@
       100% { top: 0%; }
     }
 
-    /* Buttons */
+    /* Controls & Buttons */
     .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
     .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-camera { background: var(--accent); color: white; }
@@ -122,19 +122,18 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Receipt Scanner (Auto-Crop & Auto-Adjust)</h1>
-      <p>Auto Paper Boundary Detection & High-Contrast OCR System</p>
+      <h1>🚖 RTA Receipt Scanner (Deep Black Text Engine)</h1>
+      <p>Auto Brightness Control & High Contrast Thermal Text Enhancer</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Live Viewport & Auto-Cropping</span>
+        <span>📷 Live Viewport & Enhanced Crop</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
-      <!-- Side-by-Side Dual Viewport -->
       <div class="viewports-grid">
-        <!-- 1. Original Image / Camera View -->
+        <!-- 1. Original Image View -->
         <div class="viewport-box">
           <div class="viewport-label">1. Original Input</div>
           <video id="live-video" autoplay playsinline style="display:none;"></video>
@@ -144,13 +143,13 @@
           </div>
         </div>
 
-        <!-- 2. Auto-Cropped & Adjusted Image View -->
+        <!-- 2. Auto-Cropped & Deep Black Enhanced Image View -->
         <div class="viewport-box">
-          <div class="viewport-label">2. Auto-Cropped & Adjusted</div>
-          <img id="cropped-preview-img" style="display:none;" alt="Auto Cropped Receipt" />
+          <div class="viewport-label">2. Deep Black & Brightness Adjusted</div>
+          <img id="cropped-preview-img" style="display:none;" alt="Auto Cropped Deep Black Receipt" />
           <div class="laser-line" id="laser"></div>
           <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            ⚡ Auto-Crop aur Auto-Adjustment Yahan Dikhayi Dega
+            ⚡ Auto Darkened & Deep Black Text Yahan Dikhayi Dega
           </div>
         </div>
       </div>
@@ -252,7 +251,7 @@
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Active.</b> Receipt ko samne rakhein.';
+        statusBox.innerHTML = '🟢 <b>Camera Active.</b> Receipt ki photo lein.';
       } catch (err) {
         alert("Camera Error: " + err.message);
       }
@@ -290,19 +289,18 @@
 
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Auto-Crop & Adjust Process ho raha hai...</b>';
+        statusBox.innerHTML = '⚙️ <b>Brightness reduction aur Dark text enhance ho raha hai...</b>';
         processAndAutoCrop();
       };
 
       previewImg.src = objectUrl;
     }
 
-    // --- AUTO CROP & AUTO ADJUST ENGINE ---
+    // --- ENHANCED DEEP BLACK & BRIGHTNESS ADJUSTMENT ENGINE ---
     function processAndAutoCrop() {
       const w = previewImg.naturalWidth || previewImg.width;
       const h = previewImg.naturalHeight || previewImg.height;
 
-      // 1. Temp canvas for original image analysis
       const origCanvas = document.createElement('canvas');
       origCanvas.width = w;
       origCanvas.height = h;
@@ -312,18 +310,16 @@
       const imgData = oCtx.getImageData(0, 0, w, h);
       const data = imgData.data;
 
-      // 2. Paper Bounding Box Detectors (Auto Crop logic)
+      // 1. Auto Paper Crop Boundary Detection
       let minX = w, minY = h, maxX = 0, maxY = 0;
       let foundPaper = false;
 
       for (let y = 0; y < h; y += 4) {
         for (let x = 0; x < w; x += 4) {
           let i = (y * w + x) * 4;
-          let r = data[i], g = data[i+1], b = data[i+2];
-          let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+          let brightness = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
 
-          // Receipt thermal paper is typically lighter/brighter than background
-          if (brightness > 60) {
+          if (brightness > 50) {
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
@@ -333,7 +329,6 @@
         }
       }
 
-      // If bounds valid, apply padding & crop
       if (!foundPaper || (maxX - minX < 100) || (maxY - minY < 100)) {
         minX = 0; minY = 0; maxX = w; maxY = h;
       } else {
@@ -348,34 +343,48 @@
       const cropW = maxX - minX;
       const cropH = maxY - minY;
 
-      // 3. Render Auto-Cropped image to processing canvas
       procCanvas.width = cropW;
       procCanvas.height = cropH;
       const pCtx = procCanvas.getContext('2d');
       pCtx.drawImage(origCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // 4. Auto Image Adjust (High Contrast Binarization)
+      // 2. High-Contrast Deep Black Binarization & Brightness Control
       const croppedData = pCtx.getImageData(0, 0, cropW, cropH);
       const cPixels = croppedData.data;
 
       for (let i = 0; i < cPixels.length; i += 4) {
-        let gray = 0.299 * cPixels[i] + 0.587 * cPixels[i+1] + 0.114 * cPixels[i+2];
-        // Binarize text dots vs background
-        let val = gray < 145 ? 0 : 255;
-        cPixels[i] = val;
-        cPixels[i+1] = val;
-        cPixels[i+2] = val;
+        let r = cPixels[i];
+        let g = cPixels[i+1];
+        let b = cPixels[i+2];
+
+        // Grayscale conversion
+        let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Brightness attenuation (Reduce overall glare/exposure by 15%)
+        gray = gray * 0.85;
+
+        // Aggressive Dark Text Extraction:
+        // Any pixel slightly darker than paper background (gray < 170) is forced to PURE BLACK (0,0,0)
+        if (gray < 170) {
+          cPixels[i] = 0;     // Red
+          cPixels[i+1] = 0;   // Green
+          cPixels[i+2] = 0;   // Blue
+        } else {
+          cPixels[i] = 255;   // Background White
+          cPixels[i+1] = 255;
+          cPixels[i+2] = 255;
+        }
       }
+
       pCtx.putImageData(croppedData, 0, 0);
 
-      // 5. Update UI Preview Box with Auto-Cropped & Adjusted Image
+      // 3. Update Preview Image Box
       croppedPreviewImg.src = procCanvas.toDataURL('image/png');
       placeholder2.style.display = 'none';
       croppedPreviewImg.style.display = 'block';
 
-      statusBox.innerHTML = '✨ <b>Auto-Cropped & Adjusted!</b> Ab OCR scanning shuru ho rahi hai...';
+      statusBox.innerHTML = '✨ <b>Brightness kam aur Text Deep Black ho gaya!</b> Scanning shuru...';
       
-      // 6. Run OCR on cropped & preprocessed image
       runOCR();
     }
 
@@ -390,7 +399,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Reading Text: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Reading Deep Black Text: ${prog}%</b>`;
               }
             }
           }
@@ -402,7 +411,7 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Auto-Crop, Adjustment aur Scanning Mukammal!</b>';
+          statusBox.innerHTML = '✅ <b>High Contrast Scanning Mukammal!</b>';
         } else {
           statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }

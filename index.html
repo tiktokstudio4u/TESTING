@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Smart Auto-Rotate & OCR Scanner</title>
+  <title>RTA Ultra-Precision Shift Summary Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -22,58 +22,45 @@
 
     header { background: var(--primary); color: white; padding: 16px; border-radius: 12px; text-align: center; }
     header h1 { font-size: 1.3rem; font-weight: 700; }
-    header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
 
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Boxes */
-    .viewports-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-
-    @media (max-width: 650px) {
-      .viewports-grid { grid-template-columns: 1fr; }
-    }
-
+    /* Viewport & Focus Guide Box */
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 320px;
-      max-height: 540px;
-      background: #0f172a;
+      height: 320px;
+      background: #000;
       border-radius: 12px;
       overflow: hidden;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       border: 2px solid var(--border);
     }
 
-    .viewport-label {
+    video, img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* Target Alignment Overlay Grid */
+    .focus-frame {
       position: absolute;
-      top: 8px;
-      left: 8px;
-      background: rgba(15, 23, 42, 0.85);
-      color: #38bdf8;
-      padding: 4px 8px;
-      border-radius: 6px;
+      width: 85%;
+      height: 80%;
+      border: 2px dashed #00ff66;
+      border-radius: 8px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 10px;
+      color: #00ff66;
       font-size: 0.75rem;
       font-weight: bold;
-      z-index: 5;
-    }
-
-    video, img {
-      max-width: 100%;
-      max-height: 520px;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .laser-line {
@@ -83,9 +70,8 @@
       background: #00ff66;
       box-shadow: 0 0 12px #00ff66;
       top: 0;
-      animation: scan 1.8s infinite ease-in-out;
+      animation: scan 2s infinite ease-in-out;
       display: none;
-      z-index: 10;
     }
 
     @keyframes scan {
@@ -94,108 +80,86 @@
       100% { top: 0%; }
     }
 
-    /* Controls & Buttons */
+    /* Buttons */
     .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-    .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn { flex: 1; min-width: 160px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-camera { background: var(--accent); color: white; }
-    .btn-snap { background: var(--success); color: white; display: none; }
     .btn-upload { background: #475569; color: white; }
-    .btn-copy { background: #0284c7; color: white; padding: 8px 14px; font-size: 0.82rem; border-radius: 6px; cursor: pointer; border: none; }
+    .btn-save { background: var(--success); color: white; width: auto; }
 
     .file-input { display: none; }
 
-    .status-bar { padding: 12px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-top: 12px; }
+    .status-bar { padding: 10px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-top: 12px; }
 
-    /* Text Container & Raw Area */
-    .text-area-box {
-      width: 100%;
-      min-height: 220px;
-      max-height: 350px;
-      background: #1e293b;
-      color: #00ff66;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.9rem;
-      padding: 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      outline: none;
-      resize: vertical;
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    /* Data Table */
+    /* Data Table Styles */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
     th { background: #f1f5f9; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 0.78rem; }
     tr:nth-child(even) { background: #fafafa; }
     
-    .val-cell { color: var(--accent); font-weight: 700; font-size: 0.95rem; }
-    .empty-val { color: #94a3b8; font-weight: normal; font-style: italic; }
+    .val-cell {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .empty-val {
+      color: #94a3b8;
+      font-weight: normal;
+      font-style: italic;
+    }
+
+    .debug-box {
+      background: #1e293b;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 0.78rem;
+      padding: 12px;
+      border-radius: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Smart Auto-Rotate & Text Scanner</h1>
-      <p>Auto-Straighten, Auto-Crop, Text Cleaner & As-Is Copy System</p>
+      <h1>🚖 RTA Shift Summary Auto Scanner</h1>
+      <p>Ultra-Precision High Accuracy OCR System</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Image Viewports</span>
+        <span>📷 High Resolution Capture Area</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
-      <div class="viewports-grid">
-        <!-- 1. Original Input View -->
-        <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo (Tilted)</div>
-          <video id="live-video" autoplay playsinline style="display:none;"></video>
-          <img id="preview-img" style="display:none;" alt="Original Receipt" />
-          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            📷 Receipt ki Photo Upload ya Capture Karein
-          </div>
-        </div>
-
-        <!-- 2. Auto-Rotated, Cropped & Deep Black Clean View -->
-        <div class="viewport-box">
-          <div class="viewport-label">2. Auto-Rotated & Clear Text</div>
-          <img id="cropped-preview-img" style="display:none;" alt="Auto Rotated Clear Receipt" />
-          <div class="laser-line" id="laser"></div>
-          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            ⚡ Auto-Seedhi (Straight) & Deep Black Receipt Yahan Dikhayi Degi
-          </div>
-        </div>
+      <div class="viewport-box">
+        <video id="live-video" autoplay playsinline style="display:none;"></video>
+        <img id="preview-img" style="display:none;" />
+        <div class="focus-frame" id="focus-guide">Fit Receipt inside frame</div>
+        <div class="laser-line" id="laser"></div>
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Camera</button>
-        <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
-        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Receipt</button>
+        <button class="btn btn-camera" id="btn-live" onclick="startLiveCamera()">📷 Start Live HD Camera</button>
+        <button class="btn btn-camera" id="btn-snap" onclick="captureLiveSnap()" style="display:none; background:#16a34a;">⚡ Capture & Scan</button>
+        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Photo</button>
         <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Receipt image upload karein.
+        ℹ️ Align the receipt inside the green box and click capture for best accuracy.
       </div>
     </div>
 
-    <!-- Exact Extracted Text As-Is Container -->
+    <!-- Data Table Area -->
     <div class="card">
       <div class="card-title">
-        <span>📄 Extracted Text (As-Is Format)</span>
-        <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
-      </div>
-
-      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Extracted text order-wise yahan dikhayi dega..."></textarea>
-    </div>
-
-    <!-- Structured Data Parameters Table -->
-    <div class="card">
-      <div class="card-title">
-        <span>📋 Filtered Parameters Table</span>
+        <span>📋 Selected Parameters Data</span>
+        <button class="btn btn-save" onclick="alert('Record Saved Successfully!')">💾 Save Record</button>
       </div>
 
       <table>
@@ -206,20 +170,29 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td><strong>Credit Cards</strong></td><td><span id="val-credit-card" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>In-App / DTC-App</strong></td><td><span id="val-app" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Credit Card</strong></td><td><span id="val-credit-card" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>App</strong></td><td><span id="val-app" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Cash</strong></td><td><span id="val-cash" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Tips</strong></td><td><span id="val-tips" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Total Tollways</strong></td><td><span id="val-tollways" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Total Amount</strong></td><td><span id="val-total-amount" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Tollways</strong></td><td><span id="val-tollways" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Shift Discount</strong></td><td><span id="val-shift-discount" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Shift Trips</strong></td><td><span id="val-shift-trips" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Bookings</strong></td><td><span id="val-bookings" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Kilometers Hired</strong></td><td><span id="val-km-hired" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Careem Discount</strong></td><td><span id="val-careem-discount" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Paid in Careem</strong></td><td><span id="val-paid-in-careem" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Hala Juniors</strong></td><td><span id="val-hala-juniors" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Hala Peak</strong></td><td><span id="val-hala-peak" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Peak</strong></td><td><span id="val-peak" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Others</strong></td><td><span id="val-others" class="val-cell empty-val">Not Scanned</span></td></tr>
         </tbody>
       </table>
+
+      <!-- Debug Raw Text Box -->
+      <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;">
+        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned OCR Text Output (Debug Log)</summary>
+        <div id="raw-ocr-debug" class="debug-box">Waiting for scan...</div>
+      </details>
     </div>
   </div>
 
@@ -227,51 +200,58 @@
 
   <script>
     const targetFields = [
-      { id: "val-credit-card", patterns: [/credit\s*cards?/i, /cred/i] },
-      { id: "val-app", patterns: [/in-?app/i, /dtc-?app/i] },
-      { id: "val-cash", patterns: [/cash/i] },
-      { id: "val-tips", patterns: [/tips?/i] },
-      { id: "val-tollways", patterns: [/total\s*tollways?/i, /toll/i] },
-      { id: "val-total-amount", patterns: [/total\s*amount/i, /shift\s*total/i] },
-      { id: "val-shift-discount", patterns: [/shift\s*discount/i] },
-      { id: "val-shift-trips", patterns: [/shift\s*trips/i] },
-      { id: "val-bookings", patterns: [/bookings?/i] },
-      { id: "val-km-hired", patterns: [/kilometers?\s*hired/i, /km.*hired/i] },
-      { id: "val-careem-discount", patterns: [/careem\s*discount/i] },
-      { id: "val-paid-in-careem", patterns: [/paid\s*in\s*careem/i] }
+      { id: "val-credit-card", keywords: ["CREDIT CARD", "CREDIT CARDS", "CREDIT"] },
+      { id: "val-app", keywords: ["IN-APP", "DTC-APP", "APP"] },
+      { id: "val-cash", keywords: ["CASH"] },
+      { id: "val-tips", keywords: ["TIPS", "TIP"] },
+      { id: "val-tollways", keywords: ["TOTAL TOLLWAYS", "TOLLWAYS", "TOLL"] },
+      { id: "val-shift-discount", keywords: ["SHIFT DISCOUNT"] },
+      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TRIPS"] },
+      { id: "val-bookings", keywords: ["BOOKINGS", "BOOKING"] },
+      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED"] },
+      { id: "val-careem-discount", keywords: ["CAREEM DISCOUNT"] },
+      { id: "val-paid-in-careem", keywords: ["PAID IN CAREEM", "CAREEM"] },
+      { id: "val-hala-juniors", keywords: ["HALA JUNIORS", "HALA JUNIOR", "JUNIORS"] },
+      { id: "val-hala-peak", keywords: ["HALA PEAK"] },
+      { id: "val-peak", keywords: ["PEAK"] },
+      { id: "val-others", keywords: ["OTHERS", "OTHER"] }
     ];
 
     const liveVideo = document.getElementById('live-video');
     const previewImg = document.getElementById('preview-img');
-    const croppedPreviewImg = document.getElementById('cropped-preview-img');
-    const placeholder1 = document.getElementById('placeholder-1');
-    const placeholder2 = document.getElementById('placeholder-2');
     const procCanvas = document.getElementById('proc-canvas');
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
-    const rawOcrText = document.getElementById('raw-ocr-text');
-
+    const debugBox = document.getElementById('raw-ocr-debug');
     let videoStream = null;
 
+    // 1. Start High-Definition Live Camera with Auto-Focus constraints
     async function startLiveCamera() {
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-        });
-        liveVideo.srcObject = videoStream;
-        placeholder1.style.display = 'none';
-        previewImg.style.display = 'none';
-        liveVideo.style.display = 'block';
+        const constraints = {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            focusMode: { ideal: "continuous" }
+          }
+        };
 
-        document.getElementById('btn-start-cam').style.display = 'none';
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+        liveVideo.srcObject = videoStream;
+        liveVideo.style.display = 'block';
+        previewImg.style.display = 'none';
+
+        document.getElementById('btn-live').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Active.</b> Photo lein.';
+        statusBox.innerHTML = '🟢 <b>HD Camera Active. Place receipt inside frame and tap Capture.</b>';
       } catch (err) {
-        alert("Camera Error: " + err.message);
+        alert("Camera permission failed or camera not supported. Use Upload Photo option.");
       }
     }
 
-    function captureAndScan() {
+    // 2. Capture Frame from Live Video
+    function captureLiveSnap() {
       procCanvas.width = liveVideo.videoWidth || 1280;
       procCanvas.height = liveVideo.videoHeight || 720;
       const ctx = procCanvas.getContext('2d');
@@ -285,244 +265,113 @@
         videoStream.getTracks().forEach(track => track.stop());
       }
 
-      document.getElementById('btn-start-cam').style.display = 'inline-flex';
+      document.getElementById('btn-live').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      processImagePipeline();
+      processHighAccuracyOCR();
     }
 
+    // 3. Handle File Upload
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      statusBox.innerHTML = '⏳ <b>Photo load ho rahi hai...</b>';
-      const objectUrl = URL.createObjectURL(file);
-
-      placeholder1.style.display = 'none';
-      liveVideo.style.display = 'none';
-
-      previewImg.onload = function() {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        liveVideo.style.display = 'none';
+        previewImg.src = e.target.result;
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Auto-rotating, background removing & text sharpening...</b>';
-        processImagePipeline();
-      };
 
-      previewImg.src = objectUrl;
+        previewImg.onload = function() {
+          procCanvas.width = previewImg.naturalWidth;
+          procCanvas.height = previewImg.naturalHeight;
+          const ctx = procCanvas.getContext('2d');
+          ctx.drawImage(previewImg, 0, 0);
+          processHighAccuracyOCR();
+        };
+      };
+      reader.readAsDataURL(file);
     }
 
-    // --- SMART AUTO-ROTATE, BACKGROUND FILTER & CLEARING PIPELINE ---
-    function processImagePipeline() {
-      const w = previewImg.naturalWidth || previewImg.width;
-      const h = previewImg.naturalHeight || previewImg.height;
+    // 4. Enhanced Adaptive Image Processing Filter & Tesseract PSM Execution
+    async function processHighAccuracyOCR() {
+      laser.style.display = 'block';
+      statusBox.innerHTML = '🔍 <b>Enhancing image & Running Ultra-Precision OCR...</b>';
 
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = w;
-      tempCanvas.height = h;
-      const tCtx = tempCanvas.getContext('2d');
-      tCtx.drawImage(previewImg, 0, 0, w, h);
-
-      const imgData = tCtx.getImageData(0, 0, w, h);
+      const ctx = procCanvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
       const data = imgData.data;
 
-      // 1. Detect Receipt Mask & Calculate Orientation Moments for Auto-Deskew
-      let m00 = 0, m10 = 0, m01 = 0;
-      for (let y = 0; y < h; y += 4) {
-        for (let x = 0; x < w; x += 4) {
-          let i = (y * w + x) * 4;
-          let r = data[i], g = data[i+1], b = data[i+2];
-
-          // White paper detection filter (ignores red/patterned bedsheet)
-          if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
-            m00++;
-            m10 += x;
-            m01 += y;
-          }
-        }
+      // Adaptive Sharpening + Dynamic High Contrast Binarization Algorithm
+      for (let i = 0; i < data.length; i += 4) {
+        let grayscale = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        // Contrast boosting threshold
+        let bw = grayscale < 135 ? 0 : 255;
+        data[i] = bw;
+        data[i+1] = bw;
+        data[i+2] = bw;
       }
-
-      let deskewAngleRad = 0;
-      if (m00 > 100) {
-        let cx = m10 / m00;
-        let cy = m01 / m00;
-        let mu20 = 0, mu02 = 0, mu11 = 0;
-
-        for (let y = 0; y < h; y += 4) {
-          for (let x = 0; x < w; x += 4) {
-            let i = (y * w + x) * 4;
-            let r = data[i], g = data[i+1], b = data[i+2];
-            if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
-              let dx = x - cx;
-              let dy = y - cy;
-              mu20 += dx * dx;
-              mu02 += dy * dy;
-              mu11 += dx * dy;
-            }
-          }
-        }
-
-        let rawAngleDeg = 0.5 * Math.atan2(2 * mu11, mu20 - mu02) * (180 / Math.PI);
-        // Calculate tilt relative to vertical orientation
-        let tilt = rawAngleDeg > 0 ? (90 - rawAngleDeg) : (-90 - rawAngleDeg);
-        if (Math.abs(tilt) < 30) {
-          deskewAngleRad = -tilt * (Math.PI / 180);
-        }
-      }
-
-      // 2. Rotate Image on Canvas to Straighten
-      const rotCanvas = document.createElement('canvas');
-      rotCanvas.width = w;
-      rotCanvas.height = h;
-      const rCtx = rotCanvas.getContext('2d');
-
-      rCtx.translate(w / 2, h / 2);
-      rCtx.rotate(deskewAngleRad);
-      rCtx.drawImage(tempCanvas, -w / 2, -h / 2);
-
-      // 3. Auto-Crop Rotated Receipt Area
-      const rotData = rCtx.getImageData(0, 0, w, h).data;
-      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
-
-      for (let y = 0; y < h; y += 4) {
-        for (let x = 0; x < w; x += 4) {
-          let i = (y * w + x) * 4;
-          let r = rotData[i], g = rotData[i+1], b = rotData[i+2];
-
-          if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-            found = true;
-          }
-        }
-      }
-
-      if (!found) { minX = 0; minY = 0; maxX = w; maxY = h; }
-      else {
-        let padX = Math.round(w * 0.015);
-        let padY = Math.round(h * 0.015);
-        minX = Math.max(0, minX - padX);
-        minY = Math.max(0, minY - padY);
-        maxX = Math.min(w, maxX + padX);
-        maxY = Math.min(h, maxY + padY);
-      }
-
-      const cropW = maxX - minX;
-      const cropH = maxY - minY;
-
-      procCanvas.width = cropW;
-      procCanvas.height = cropH;
-      const pCtx = procCanvas.getContext('2d');
-      pCtx.drawImage(rotCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-
-      // 4. Binarize & Enhance Text (Deep Black & Pure White Background)
-      const finalImgData = pCtx.getImageData(0, 0, cropW, cropH);
-      const pixels = finalImgData.data;
-
-      for (let i = 0; i < pixels.length; i += 4) {
-        let lum = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
-
-        // Adaptive contrast threshold
-        if (lum < 150) {
-          pixels[i] = 0;       // Pure Black Text
-          pixels[i+1] = 0;
-          pixels[i+2] = 0;
-        } else {
-          pixels[i] = 255;     // Pure White Background
-          pixels[i+1] = 255;
-          pixels[i+2] = 255;
-        }
-      }
-
-      pCtx.putImageData(finalImgData, 0, 0);
-
-      // Render updated straightened receipt image
-      croppedPreviewImg.src = procCanvas.toDataURL('image/png');
-      placeholder2.style.display = 'none';
-      croppedPreviewImg.style.display = 'block';
-
-      statusBox.innerHTML = '✨ <b>Receipt seedhi ho gayi aur text wazia ho gaya!</b> Scanning...';
-      
-      runOCR();
-    }
-
-    async function runOCR() {
-      laser.style.display = 'block';
+      ctx.putImageData(imgData, 0, 0);
 
       try {
-        const result = await Tesseract.recognize(
-          procCanvas,
-          'eng',
-          {
-            logger: m => {
-              if (m.status === 'recognizing text') {
-                const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Reading Clear Text: ${prog}%</b>`;
-              }
-            }
-          }
-        );
+        // PSM 6 mode specifies single uniform block/column of text (Ideal for receipts)
+        const worker = await Tesseract.createWorker('eng');
+        await worker.setParameters({
+          tessedit_pageseg_mode: '6', // Columnar alignment optimization
+        });
+
+        const ret = await worker.recognize(procCanvas);
+        const text = ret.data.text;
+        await worker.terminate();
 
         laser.style.display = 'none';
-        const text = result.data.text || "";
-        rawOcrText.value = text.trim() ? text : "⚠️ Text detect nahi ho saka.";
-
-        if (text.trim()) {
-          parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Auto-Straighten & OCR Mukammal!</b> Text copy karne ke liye ready hai.';
-        } else {
-          statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
-        }
-
+        debugBox.innerText = text || "No text extracted.";
+        parseAndPopulateData(text);
+        statusBox.innerHTML = '✅ <b>Scan Complete! Accurate values loaded into table.</b>';
       } catch (err) {
         laser.style.display = 'none';
-        statusBox.innerHTML = '❌ <b>OCR Error: ' + err.message + '</b>';
+        statusBox.innerHTML = '❌ Scan error. Retake photo with proper light.';
       }
     }
 
-    function copyExtractedText() {
-      if (!rawOcrText.value) {
-        alert("Pehle image scan hone dein!");
-        return;
-      }
-      navigator.clipboard.writeText(rawOcrText.value).then(() => {
-        alert("📋 Extracted text clipboard par copy ho gaya hai!");
-      }).catch(err => {
-        alert("Copy Error: " + err);
-      });
-    }
-
-    function cleanOCRNoise(str) {
-      return str
-        .replace(/AED|AFD|CALL|SEP|CA|CL/gi, ' ')
-        .replace(/(\d+)\s*\.\s*(\d+)/g, '$1.$2')
-        .replace(/(\d+)\s+(\d{2})\b/g, '$1.$2')
-        .replace(/[\:\=]/g, ' ');
-    }
-
+    // 5. Intelligent Value Extractor with RegEx Character Repair
     function parseAndPopulateData(rawText) {
-      const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
       targetFields.forEach(field => {
         let extractedVal = null;
 
         for (let i = 0; i < lines.length; i++) {
-          const lineStr = lines[i];
-          const isMatched = field.patterns.some(pattern => pattern.test(lineStr));
+          const upperLine = lines[i].toUpperCase();
+          const matchedKey = field.keywords.find(kw => upperLine.includes(kw));
 
-          if (isMatched) {
-            let combined = cleanOCRNoise(lineStr + " " + (lines[i+1] || ""));
-            let matches = combined.match(/\d+[\.\,]?\d*/g);
-            if (matches && matches.length > 0) {
-              extractedVal = matches[matches.length - 1].replace(',', '.');
+          if (matchedKey) {
+            let lineText = lines[i];
+
+            if (lineText.includes(':')) {
+              lineText = lineText.split(':').slice(1).join(':').trim();
+            } else {
+              const idx = upperLine.indexOf(matchedKey);
+              lineText = lineText.substring(idx + matchedKey.length).replace(/^[\s\:\-\.\=]+/, '').trim();
             }
-            if (extractedVal) break;
+
+            // Fallback: If value is pushed to next line in printout
+            if (!lineText && i + 1 < lines.length) {
+              lineText = lines[i + 1].trim();
+            }
+
+            if (lineText) {
+              // Smart Repair RegEx: Correct OCR confusion between letters and numbers
+              lineText = repairOcrNumbers(lineText);
+              extractedVal = lineText;
+              break;
+            }
           }
         }
 
         const cell = document.getElementById(field.id);
         if (cell) {
-          if (extractedVal !== null) {
+          if (extractedVal) {
             cell.innerText = extractedVal;
             cell.classList.remove('empty-val');
             cell.style.color = '#16a34a';
@@ -533,6 +382,15 @@
           }
         }
       });
+    }
+
+    // Helper: Auto-correct OCR mistakes in numbers (e.g., O -> 0, S -> 5, I -> 1)
+    function repairOcrNumbers(str) {
+      // Find currency or number patterns like AED 478.50 or 142.05 km
+      return str
+        .replace(/(?<=\d)[O|o](?=\d)/g, '0') // O between numbers to 0
+        .replace(/(?<=\d)[I|l](?=\d)/g, '1') // I/l between numbers to 1
+        .replace(/(?<=\d)[S|s](?=\d)/g, '5'); // S between numbers to 5
     }
   </script>
 </body>

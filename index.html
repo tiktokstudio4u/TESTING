@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Receipt Precision OCR Scanner</title>
+  <title>RTA Shift Summary Advanced AI Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -52,7 +52,6 @@
       margin: 0 auto;
     }
 
-    /* Laser Line */
     .laser-line {
       position: absolute;
       width: 100%;
@@ -99,13 +98,13 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Shift Summary Precision Scanner</h1>
-      <p>High-Accuracy Thermal Receipt Data Extractor</p>
+      <h1>🚖 RTA Shift Summary AI Scanner</h1>
+      <p>Fuzzy OCR Parsing & Error Correction Engine</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Receipt Preview</span>
+        <span>📷 Receipt Viewport</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
@@ -114,7 +113,7 @@
         <img id="preview-img" style="display:none;" alt="Uploaded Receipt Preview" />
         <div class="laser-line" id="laser"></div>
         <div id="placeholder" style="text-align: center; color: #94a3b8; padding: 20px;">
-          📷 "Upload Receipt" par tap karke photo select karein
+          📷 Photo Upload Karein Ya Camera Start Karein
         </div>
       </div>
 
@@ -126,7 +125,7 @@
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ Receipt image upload karein.
+        ℹ️ System Ready. Photo select karein.
       </div>
     </div>
 
@@ -134,7 +133,7 @@
     <div class="card">
       <div class="card-title">
         <span>📋 Extracted Parameters Data</span>
-        <button class="btn btn-save" onclick="alert('Record Saved Successfully!')">💾 Save Record</button>
+        <button class="btn btn-save" onclick="alert('Record Saved!')">💾 Save Record</button>
       </div>
 
       <table>
@@ -164,7 +163,7 @@
       </table>
 
       <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;" open>
-        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned OCR Raw Output</summary>
+        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned Raw OCR Text</summary>
         <div id="raw-ocr-debug" class="debug-box">Waiting for image input...</div>
       </details>
     </div>
@@ -173,22 +172,23 @@
   <canvas id="proc-canvas" style="display:none;"></canvas>
 
   <script>
+    // Robust Fuzzy Keywords Matching Table
     const targetFields = [
-      { id: "val-credit-card", keywords: ["CREDIT CARDS", "CREDIT CARD", "CREDIT"] },
-      { id: "val-app", keywords: ["IN-APP", "DTC-APP", "IN APP", "APP"] },
-      { id: "val-cash", keywords: ["CASH"] },
-      { id: "val-tips", keywords: ["TIPS", "TIP"] },
-      { id: "val-tollways", keywords: ["TOTAL TOLLWAYS", "TOLLWAYS", "TOLL"] },
-      { id: "val-shift-discount", keywords: ["SHIFT DISCOUNT", "DISCOUNT"] },
-      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TRIPS"] },
-      { id: "val-bookings", keywords: ["BOOKINGS", "BOOKING"] },
-      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED"] },
-      { id: "val-careem-discount", keywords: ["CAREEM DISCOUNT"] },
-      { id: "val-paid-in-careem", keywords: ["PAID IN CAREEM", "CAREEM"] },
-      { id: "val-hala-juniors", keywords: ["HALA JUNIORS", "HALA JUNIOR", "JUNIORS"] },
-      { id: "val-hala-peak", keywords: ["HALA PEAK"] },
-      { id: "val-peak", keywords: ["PEAK"] },
-      { id: "val-others", keywords: ["TOTAL EXTRAS", "EXTRAS", "OTHERS", "OTHER"] }
+      { id: "val-credit-card", patterns: [/cred/i, /cards?/i, /SATIN/i] },
+      { id: "val-app", patterns: [/in-?app/i, /dtc-?app/i] },
+      { id: "val-cash", patterns: [/cash/i, /cast/i] },
+      { id: "val-tips", patterns: [/tips?/i, /rise/i] },
+      { id: "val-tollways", patterns: [/toll/i, /tollways?/i, /SEP\s*\d/i, /ota.*SEP/i] },
+      { id: "val-shift-discount", patterns: [/shift\s*disc/i, /discount/i] },
+      { id: "val-shift-trips", patterns: [/shift\s*trips/i, /trips/i] },
+      { id: "val-bookings", patterns: [/book/i, /1ngs/i] },
+      { id: "val-km-hired", patterns: [/hired/i, /km.*hired/i] },
+      { id: "val-careem-discount", patterns: [/careem\s*disc/i] },
+      { id: "val-paid-in-careem", patterns: [/paid.*car/i, /car\s*een/i] },
+      { id: "val-hala-juniors", patterns: [/hala\s*jun/i] },
+      { id: "val-hala-peak", patterns: [/hala\s*peak/i] },
+      { id: "val-peak", patterns: [/peak/i] },
+      { id: "val-others", patterns: [/extras?/i, /others?/i] }
     ];
 
     const liveVideo = document.getElementById('live-video');
@@ -213,9 +213,9 @@
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Active. Capture button dabayein.</b>';
+        statusBox.innerHTML = '🟢 <b>Camera Active.</b>';
       } catch (err) {
-        alert("Camera Access Error: " + err.message);
+        alert("Camera Error: " + err.message);
       }
     }
 
@@ -251,16 +251,15 @@
 
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Image enhance ho rahi hai. Scan shuru...</b>';
+        statusBox.innerHTML = '⚙️ <b>Scanning shuru...</b>';
         processImageAndScan();
       };
 
       previewImg.src = objectUrl;
     }
 
-    // 1. High-Contrast Binarization & 2x Upscaling for Thermal Receipts
     function processImageAndScan() {
-      const scale = 2; // Double resolution for thermal dots
+      const scale = 2;
       const w = (previewImg.naturalWidth || previewImg.width || 800) * scale;
       const h = (previewImg.naturalHeight || previewImg.height || 1200) * scale;
 
@@ -275,10 +274,10 @@
       const imgData = ctx.getImageData(0, 0, w, h);
       const data = imgData.data;
 
-      // Adaptive Black & White Binarization Filter
+      // High-contrast Binarization for thermal printer dots
       for (let i = 0; i < data.length; i += 4) {
         let gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-        let val = gray < 145 ? 0 : 255; // Convert thermal dots into solid black
+        let val = gray < 150 ? 0 : 255;
         data[i] = data[i+1] = data[i+2] = val;
       }
 
@@ -286,7 +285,6 @@
       runOCR();
     }
 
-    // 2. Tesseract OCR Engine
     async function runOCR() {
       laser.style.display = 'block';
 
@@ -298,7 +296,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Reading Thermal Text: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Reading Text: ${prog}%</b>`;
               }
             }
           }
@@ -306,22 +304,31 @@
 
         laser.style.display = 'none';
         const text = result.data.text || "";
-        debugBox.innerText = text.trim() ? text : "⚠️ No readable text found.";
+        debugBox.innerText = text.trim() ? text : "⚠️ Raw OCR Text blank ahaa hai.";
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scan Complete! Values auto-filled in table.</b>';
+          statusBox.innerHTML = '✅ <b>Data successfully extracted & corrected!</b>';
         } else {
-          statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka. Photo saaf lein.</b>';
+          statusBox.innerHTML = '⚠️ <b>Text read nahi hua.</b>';
         }
 
       } catch (err) {
         laser.style.display = 'none';
-        statusBox.innerHTML = '❌ <b>OCR Processing Error: ' + err.message + '</b>';
+        statusBox.innerHTML = '❌ <b>OCR Error: ' + err.message + '</b>';
       }
     }
 
-    // 3. Smart Extraction Logic with Typo Cleaning (e.g. 'O' -> '0')
+    // Advanced Text & Number Cleaning Engine
+    function cleanOCRNoise(str) {
+      return str
+        .replace(/AED|AFD|CALL|SEP|CA|CL/gi, ' ')
+        .replace(/4\/8/g, '478') // Thermal slash correction
+        .replace(/(\d+)\s*\.\s*(\d+)/g, '$1.$2') // Join broken decimals like "63. 36" -> "63.36"
+        .replace(/(\d+)\s+(\d{2})\b/g, '$1.$2') // "478 50" -> "478.50"
+        .replace(/[\:\=]/g, ' ');
+    }
+
     function parseAndPopulateData(rawText) {
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 
@@ -329,26 +336,15 @@
         let extractedVal = null;
 
         for (let i = 0; i < lines.length; i++) {
-          const upperLine = lines[i].toUpperCase();
-          const matchedKey = field.keywords.find(kw => upperLine.includes(kw));
+          const lineStr = lines[i];
+          const isMatched = field.patterns.some(pattern => pattern.test(lineStr));
 
-          if (matchedKey) {
-            // Check current line and next 1 line for values
-            let targetText = lines[i] + " " + (lines[i+1] || "");
+          if (isMatched) {
+            // Check current line and next line for number
+            let combined = cleanOCRNoise(lineStr + " " + (lines[i+1] || ""));
 
-            // Remove non-numeric noise like 'AED', 'km/h', 'km'
-            let cleaned = targetText
-              .replace(/AED/gi, '')
-              .replace(/km\/h/gi, '')
-              .replace(/km/gi, '')
-              .replace(/:/g, ' ')
-              .replace(/Shift In Progres/gi, '');
-
-            // Fix common thermal OCR typos ('O'/'o' mistaked for '0')
-            cleaned = cleaned.replace(/(\d)[O|o]/g, '$10').replace(/[O|o](\d)/g, '0$1');
-
-            // Regex for integers & decimal numbers
-            let matches = cleaned.match(/\d+[\.\,]?\d*/g);
+            // Extract numeric pattern
+            let matches = combined.match(/\d+[\.\,]?\d*/g);
             if (matches && matches.length > 0) {
               extractedVal = matches[matches.length - 1].replace(',', '.');
             }

@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Universal Size & Adaptive Crop OCR Scanner</title>
+  <title>RTA Universal HEIC & High-Res Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- HEIC File Converter for iPhone / Modern Android Photos -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
     :root {
       --primary: #0f172a;
@@ -138,34 +140,34 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Universal Size Scanner</h1>
-      <p>Any Picture Size Acceptor, Smart Rescaler & Dynamic Cropper</p>
+      <h1>🚖 RTA Universal Photo & HEIC Scanner</h1>
+      <p>iPhone HEIC Support, High-Res Auto-Scaling & Precision OCR</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Dynamic Viewports</span>
+        <span>📷 Processing Viewports</span>
         <span id="size-info-badge" style="font-size: 0.8rem; color: #64748b;">No Image Loaded</span>
       </div>
 
       <div class="viewports-grid">
         <!-- 1. Original View -->
         <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo (Any Resolution)</div>
+          <div class="viewport-label">1. Original Photo (HEIC/JPG/PNG)</div>
           <video id="live-video" autoplay playsinline style="display:none;"></video>
           <img id="preview-img" style="display:none;" alt="Original Receipt" />
           <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
-            📷 Kisi bhi size/resolution ki receipt image upload karein
+            📷 iPhone HEIC ya standard photo upload karein
           </div>
         </div>
 
         <!-- 2. Auto-Rescaled & Cropped View -->
         <div class="viewport-box">
-          <div class="viewport-label">2. Normalized & Clear Deep Black</div>
+          <div class="viewport-label">2. Processed & Jet Black Text</div>
           <img id="cropped-preview-img" style="display:none;" alt="Normalized Receipt" />
           <div class="laser-line" id="laser"></div>
           <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
-            ⚡ Auto-Resized & Aspect Preserved Clean Receipt
+            ⚡ Crop & Sharp Black Contrast Output
           </div>
         </div>
       </div>
@@ -173,12 +175,12 @@
       <div class="btn-group">
         <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Camera</button>
         <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
-        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Any Picture</button>
-        <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Any Picture (HEIC/JPG/PNG)</button>
+        <input type="file" id="native-file" class="file-input" accept="image/*,.heic,.heif" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Kisi bhi size ki picture upload karein.
+        ℹ️ System Ready. HEIC ya kisi bhi format ki picture upload karein.
       </div>
     </div>
 
@@ -188,7 +190,7 @@
         <span>📄 Extracted Text (As-Is Format)</span>
         <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
       </div>
-      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Normalisation ke baad text order ke sath yahan aayega..."></textarea>
+      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Extracted text yahan order ke sath aayega..."></textarea>
     </div>
 
     <!-- Parameter Table -->
@@ -290,23 +292,52 @@
       processUniversalPicturePipeline();
     }
 
-    function handleFileSelect(event) {
-      const file = event.target.files[0];
+    // --- UNIVERSAL FILE LOADER (WITH HEIC SUPPORT) ---
+    async function handleFileSelect(event) {
+      let file = event.target.files[0];
       if (!file) return;
-
-      statusBox.innerHTML = '⏳ <b>Picture load ho rahi hai...</b>';
-      const objectUrl = URL.createObjectURL(file);
 
       placeholder1.style.display = 'none';
       liveVideo.style.display = 'none';
+      previewImg.style.display = 'none';
 
-      previewImg.onload = function() {
-        previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Picture size normalize aur crop ho rahi hai...</b>';
-        processUniversalPicturePipeline();
+      const fileName = file.name.toLowerCase();
+      
+      // 1. Check if file is HEIC (iPhone format)
+      if (fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic') {
+        statusBox.innerHTML = '🔄 <b>iPhone HEIC file detected.</b> Converting to standard JPEG...';
+        try {
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.92
+          });
+          file = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        } catch (heicErr) {
+          statusBox.innerHTML = '❌ <b>HEIC Conversion Error:</b> ' + heicErr.message;
+          return;
+        }
+      }
+
+      statusBox.innerHTML = '⏳ <b>Photo read ho rahi hai...</b>';
+
+      // 2. Load File via FileReader Stream
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.onload = function() {
+          previewImg.style.display = 'block';
+          statusBox.innerHTML = '⚙️ <b>Auto-scaling aur Adaptive Crop ho raha hai...</b>';
+          processUniversalPicturePipeline();
+        };
+
+        previewImg.onerror = function() {
+          statusBox.innerHTML = '❌ <b>Image Load Error:</b> Picture format corrupt ya unsupported hai.';
+        };
+
+        previewImg.src = e.target.result;
       };
 
-      previewImg.src = objectUrl;
+      reader.readAsDataURL(file);
     }
 
     // --- UNIVERSAL PICTURE NORMALIZER & ADAPTIVE CROPPER ---
@@ -316,7 +347,7 @@
 
       sizeInfoBadge.innerText = `Original: ${origW}x${origH}px`;
 
-      // 1. Rescaling Engine (Normalizes high resolution pictures to optimal max 2000px dimension)
+      // Rescaling Engine (Max 2000px)
       const maxDim = 2000;
       let normW = origW;
       let normH = origH;
@@ -340,7 +371,7 @@
       const normImageData = nCtx.getImageData(0, 0, normW, normH);
       const data = normImageData.data;
 
-      // 2. Smart Aspect Ratio Cropping (Preserves 100% Full Height for Tall Receipts)
+      // Smart Aspect Ratio Cropping
       let minX = normW, minY = normH, maxX = 0, maxY = 0;
       let paperFound = false;
 
@@ -352,7 +383,6 @@
           let lum = 0.299 * r + 0.587 * g + 0.114 * b;
           let colorSpread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
 
-          // Thermal white paper detector
           if (lum > 105 && colorSpread < 38) {
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
@@ -381,7 +411,7 @@
       const pCtx = procCanvas.getContext('2d');
       pCtx.drawImage(normCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // 3. Local Sauvola Window Thresholding (Deep Black Text Creation)
+      // Local Sauvola Window Thresholding
       const croppedData = pCtx.getImageData(0, 0, cropW, cropH);
       const pixels = croppedData.data;
       const lumArray = new Float32Array(cropW * cropH);
@@ -415,11 +445,11 @@
           let pIdx = idx * 4;
 
           if (curLum < localMean - 10 && curLum < 170) {
-            pixels[pIdx] = 0;       // Jet Black Text
+            pixels[pIdx] = 0;       // Jet Black
             pixels[pIdx + 1] = 0;
             pixels[pIdx + 2] = 0;
           } else {
-            pixels[pIdx] = 255;     // Pure White Paper
+            pixels[pIdx] = 255;     // White Paper
             pixels[pIdx + 1] = 255;
             pixels[pIdx + 2] = 255;
           }
@@ -428,13 +458,12 @@
 
       pCtx.putImageData(croppedData, 0, 0);
 
-      // Render updated normalized receipt
       croppedPreviewImg.src = procCanvas.toDataURL('image/png');
       placeholder2.style.display = 'none';
       croppedPreviewImg.style.display = 'block';
 
-      sizeInfoBadge.innerText = `Normalized: ${normW}x${normH}px | Crop: ${cropW}x${cropH}px`;
-      statusBox.innerHTML = '✨ <b>Picture size normalized & cropped!</b> OCR text read kar raha hai...';
+      sizeInfoBadge.innerText = `Norm: ${normW}x${normH}px | Crop: ${cropW}x${cropH}px`;
+      statusBox.innerHTML = '✨ <b>Upload successful & cropped!</b> Text read ho raha hai...';
       
       runOCR();
     }
@@ -462,7 +491,7 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Picture Normalized & OCR Mukammal!</b> Text order wise tayar hai.';
+          statusBox.innerHTML = '✅ <b>Scanning Mukammal!</b> Text order wise tayar hai.';
         } else {
           statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }

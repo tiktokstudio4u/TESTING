@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Strip Density Auto-Crop Scanner</title>
-  <!-- Tesseract.js Engine v5 -->
+  <title>Smart Perspective Warp & Document Straightener OCR</title>
+  <!-- OpenCV.js for Real Computer Vision (4-Corner Detection & Perspective Warp) -->
+  <script async src="https://docs.opencv.org/4.7.0/opencv.js" onload="onOpenCvReady();"></script>
+  <!-- Tesseract.js Engine v5 for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- HEIC File Converter for iPhone / Modern Android Photos -->
+  <!-- HEIC File Converter for iPhone -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
     :root {
@@ -20,16 +22,15 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg); color: var(--primary); padding: 15px 10px; }
 
-    .container { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .container { max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
-    header { background: var(--primary); color: white; padding: 16px; border-radius: 12px; text-align: center; }
+    header { background: var(--primary); color: white; padding: 18px; border-radius: 12px; text-align: center; }
     header h1 { font-size: 1.3rem; font-weight: 700; }
     header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
 
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Grid */
     .viewports-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -43,7 +44,7 @@
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 350px;
+      min-height: 380px;
       max-height: 600px;
       background: #0f172a;
       border-radius: 12px;
@@ -71,7 +72,7 @@
       margin-bottom: 8px;
     }
 
-    video, img {
+    video, img, canvas {
       max-width: 100%;
       height: auto;
       object-fit: contain;
@@ -140,54 +141,54 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Strip Density Auto-Crop Scanner</h1>
-      <p>Carpet Pattern Removal & Precise Receipt Strip Extraction</p>
+      <h1>🚖 Auto-Straighten & Perspective Warp Scanner</h1>
+      <p>CamScanner Technology: Edge Detection, 4-Corner Warp & High-Res OCR</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Processing Viewports</span>
-        <span id="size-info-badge" style="font-size: 0.8rem; color: #64748b;">No Image Loaded</span>
+        <span>📷 Real-time Document Processing</span>
+        <span id="cv-status-badge" style="font-size: 0.8rem; padding: 3px 8px; background: #fef08a; color: #854d0e; border-radius: 4px;">Loading Computer Vision Engine...</span>
       </div>
 
       <div class="viewports-grid">
         <!-- 1. Original View -->
         <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo (With Background)</div>
+          <div class="viewport-label">1. Original Photo / Camera Feed</div>
           <video id="live-video" autoplay playsinline style="display:none;"></video>
           <img id="preview-img" style="display:none;" alt="Original Receipt" />
-          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
-            📷 Receipt photo upload karein
+          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 50px 10px; font-size: 0.85rem;">
+            📷 Photo upload karein ya camera start karein
           </div>
         </div>
 
-        <!-- 2. Clean Cropped Strip View -->
+        <!-- 2. Auto-Straightened & Enhanced View -->
         <div class="viewport-box">
-          <div class="viewport-label">2. Cropped Receipt Strip (Carpet Removed)</div>
-          <img id="cropped-preview-img" style="display:none;" alt="Cropped Receipt Strip" />
+          <div class="viewport-label">2. Auto-Straightened (Perspective Warped & Sharp)</div>
+          <canvas id="warped-canvas" style="display:none;"></canvas>
           <div class="laser-line" id="laser"></div>
-          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
-            ⚡ Carpet Cut Output
+          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 50px 10px; font-size: 0.85rem;">
+            ⚡ Auto-Crop & Straightened Result
           </div>
         </div>
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Camera</button>
-        <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
+        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Live Camera</button>
+        <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Auto-Straighten</button>
         <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Photo (HEIC/JPG/PNG)</button>
         <input type="file" id="native-file" class="file-input" accept="image/*,.heic,.heif" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Photo upload karein.
+        ⏳ Computer Vision (OpenCV) Engine load ho raha hai... Please wait.
       </div>
     </div>
 
-    <!-- As-Is Text Copy Container -->
+    <!-- Extracted Text Box -->
     <div class="card">
       <div class="card-title">
-        <span>📄 Extracted Text (As-Is Format)</span>
+        <span>📄 Extracted Text (Auto-Straightened OCR)</span>
         <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
       </div>
       <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Extracted text yahan aayega..."></textarea>
@@ -223,9 +224,19 @@
     </div>
   </div>
 
-  <canvas id="proc-canvas" style="display:none;"></canvas>
+  <canvas id="hidden-raw-canvas" style="display:none;"></canvas>
 
   <script>
+    let isOpenCvReady = false;
+
+    function onOpenCvReady() {
+      isOpenCvReady = true;
+      document.getElementById('cv-status-badge').innerText = "🟢 OpenCV Engine Active";
+      document.getElementById('cv-status-badge').style.background = "#dcfce7";
+      document.getElementById('cv-status-badge').style.color = "#15803d";
+      document.getElementById('status-box').innerHTML = "🟢 <b>System Ready!</b> Photo upload karein ya camera start karein.";
+    }
+
     const targetFields = [
       { id: "val-credit-card", patterns: [/credit\s*cards?/i, /cred/i] },
       { id: "val-app", patterns: [/in-?app/i, /dtc-?app/i] },
@@ -243,14 +254,12 @@
 
     const liveVideo = document.getElementById('live-video');
     const previewImg = document.getElementById('preview-img');
-    const croppedPreviewImg = document.getElementById('cropped-preview-img');
+    const warpedCanvas = document.getElementById('warped-canvas');
     const placeholder1 = document.getElementById('placeholder-1');
     const placeholder2 = document.getElementById('placeholder-2');
-    const procCanvas = document.getElementById('proc-canvas');
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
     const rawOcrText = document.getElementById('raw-ocr-text');
-    const sizeInfoBadge = document.getElementById('size-info-badge');
 
     let videoStream = null;
 
@@ -266,19 +275,20 @@
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Active.</b> Photo lein.';
+        statusBox.innerHTML = '🟢 <b>Camera Live.</b> Slip camera ke samne rakhein aur capture button dabayein.';
       } catch (err) {
-        alert("Camera Error: " + err.message);
+        alert("Camera Access Error: " + err.message);
       }
     }
 
     function captureAndScan() {
-      procCanvas.width = liveVideo.videoWidth || 1280;
-      procCanvas.height = liveVideo.videoHeight || 720;
-      const ctx = procCanvas.getContext('2d');
-      ctx.drawImage(liveVideo, 0, 0, procCanvas.width, procCanvas.height);
+      const hiddenCanvas = document.getElementById('hidden-raw-canvas');
+      hiddenCanvas.width = liveVideo.videoWidth || 1280;
+      hiddenCanvas.height = liveVideo.videoHeight || 720;
+      const ctx = hiddenCanvas.getContext('2d');
+      ctx.drawImage(liveVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
 
-      previewImg.src = procCanvas.toDataURL('image/png');
+      previewImg.src = hiddenCanvas.toDataURL('image/png');
       previewImg.style.display = 'block';
       liveVideo.style.display = 'none';
 
@@ -289,7 +299,7 @@
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      processDensityCropPipeline();
+      runPerspectivePipeline();
     }
 
     async function handleFileSelect(event) {
@@ -303,7 +313,7 @@
       const fileName = file.name.toLowerCase();
       
       if (fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic') {
-        statusBox.innerHTML = '🔄 <b>iPhone HEIC detected.</b> Converting to standard JPEG...';
+        statusBox.innerHTML = '🔄 <b>iPhone HEIC file converting to JPEG...</b>';
         try {
           const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
           file = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
@@ -313,18 +323,17 @@
         }
       }
 
-      statusBox.innerHTML = '⏳ <b>Photo read ho rahi hai...</b>';
+      statusBox.innerHTML = '⏳ <b>Image load ho rahi hai...</b>';
 
       const reader = new FileReader();
       reader.onload = function(e) {
         previewImg.onload = function() {
           previewImg.style.display = 'block';
-          statusBox.innerHTML = '⚙️ <b>Carpet ko cut karke strip crop ki ja rahi hai...</b>';
-          processDensityCropPipeline();
+          runPerspectivePipeline();
         };
 
         previewImg.onerror = function() {
-          statusBox.innerHTML = '❌ <b>Image Load Error:</b> File corrupt hai.';
+          statusBox.innerHTML = '❌ <b>Error:</b> Image format corrupt hai.';
         };
 
         previewImg.src = e.target.result;
@@ -333,181 +342,139 @@
       reader.readAsDataURL(file);
     }
 
-    // --- CARPET ISOLATOR & VERTICAL STRIP CROPER ---
-    function processDensityCropPipeline() {
-      let origW = previewImg.naturalWidth || previewImg.width;
-      let origH = previewImg.naturalHeight || previewImg.height;
-
-      // Rescale max 1800px for high performance
-      const maxDim = 1800;
-      let normW = origW;
-      let normH = origH;
-
-      if (origW > maxDim || origH > maxDim) {
-        if (origW > origH) {
-          normH = Math.round((origH * maxDim) / origW);
-          normW = maxDim;
-        } else {
-          normW = Math.round((origW * maxDim) / origH);
-          normH = maxDim;
-        }
+    // --- OPENCV PERSPECTIVE WARP & AUTO-STRAIGHTEN ENGINE ---
+    function runPerspectivePipeline() {
+      if (!isOpenCvReady) {
+        statusBox.innerHTML = '⏳ OpenCV Engine ready nahi hua, thoda wait karein...';
+        setTimeout(runPerspectivePipeline, 500);
+        return;
       }
 
-      const normCanvas = document.createElement('canvas');
-      normCanvas.width = normW;
-      normCanvas.height = normH;
-      const nCtx = normCanvas.getContext('2d');
-      nCtx.drawImage(previewImg, 0, 0, normW, normH);
+      statusBox.innerHTML = '🔍 <b>Slip corners detect aur straighten kiye ja rahe hain...</b>';
 
-      const normImageData = nCtx.getImageData(0, 0, normW, normH);
-      const data = normImageData.data;
+      try {
+        let src = cv.imread(previewImg);
+        let gray = new cv.Mat();
+        let blurred = new cv.Mat();
+        let edges = new cv.Mat();
 
-      // 1. Column Density Profile (X Projection)
-      const colDensity = new Float32Array(normW);
+        // 1. Convert to Gray & Blur
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
 
-      for (let y = 0; y < normH; y += 2) {
-        for (let x = 0; x < normW; x += 2) {
-          let i = (y * normW + x) * 4;
-          let r = data[i], g = data[i+1], b = data[i+2];
+        // 2. Canny Edge Detection
+        cv.Canny(blurred, edges, 75, 200);
 
-          let lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          let colorSpread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+        // 3. Find Contours
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-          // Thermal Paper White Filter
-          if (lum > 115 && colorSpread < 35) {
-            colDensity[x]++;
-          }
-        }
-      }
+        let maxArea = 0;
+        let receiptContour = null;
 
-      // Find highest density peak (Center of receipt paper)
-      let maxDensity = 0;
-      for (let x = 0; x < normW; x++) {
-        if (colDensity[x] > maxDensity) maxDensity = colDensity[x];
-      }
+        for (let i = 0; i < contours.size(); i++) {
+          let cnt = contours.get(i);
+          let area = cv.contourArea(cnt);
+          if (area > (src.rows * src.cols * 0.05)) { // Minimum 5% of total image
+            let peri = cv.arcLength(cnt, true);
+            let approx = new cv.Mat();
+            cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
 
-      // Receipt bounds threshold (Columns having at least 25% of max paper density)
-      let threshX = maxDensity * 0.25;
-      let minX = normW, maxX = 0;
-
-      for (let x = 0; x < normW; x++) {
-        if (colDensity[x] > threshX) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-        }
-      }
-
-      // Fallback safety if carpet has no contrast
-      if (maxX <= minX || (maxX - minX) < (normW * 0.15)) {
-        minX = Math.round(normW * 0.1);
-        maxX = Math.round(normW * 0.9);
-      }
-
-      // 2. Row Density Profile within receipt X-strip (Y Bounds)
-      let minY = normH, maxY = 0;
-      const stripWidth = maxX - minX;
-
-      for (let y = 0; y < normH; y += 2) {
-        let paperPixelsInRow = 0;
-        for (let x = minX; x <= maxX; x += 2) {
-          let i = (y * normW + x) * 4;
-          let r = data[i], g = data[i+1], b = data[i+2];
-          let lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          let colorSpread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-
-          if (lum > 115 && colorSpread < 35) {
-            paperPixelsInRow++;
-          }
-        }
-
-        // At least 20% of the strip in this row must be paper
-        if (paperPixelsInRow > (stripWidth * 0.10)) {
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-
-      if (maxY <= minY) { minY = 0; maxY = normH; }
-
-      // Add tight 1% margin
-      let padX = Math.round(normW * 0.01);
-      let padY = Math.round(normH * 0.01);
-      minX = Math.max(0, minX - padX);
-      minY = Math.max(0, minY - padY);
-      maxX = Math.min(normW, maxX + padX);
-      maxY = Math.min(normH, maxY + padY);
-
-      const cropW = maxX - minX;
-      const cropH = maxY - minY;
-
-      procCanvas.width = cropW;
-      procCanvas.height = cropH;
-      const pCtx = procCanvas.getContext('2d');
-      pCtx.drawImage(normCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-
-      // 3. Local Sauvola Window Binarization on CROPPED RECEIPT ONLY
-      const croppedData = pCtx.getImageData(0, 0, cropW, cropH);
-      const pixels = croppedData.data;
-      const lumArray = new Float32Array(cropW * cropH);
-
-      for (let i = 0; i < pixels.length; i += 4) {
-        lumArray[i / 4] = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
-      }
-
-      const windowSize = 25;
-      const halfW = Math.floor(windowSize / 2);
-
-      for (let y = 0; y < cropH; y++) {
-        for (let x = 0; x < cropW; x++) {
-          let idx = y * cropW + x;
-          let curLum = lumArray[idx];
-
-          let sum = 0, count = 0;
-          for (let wy = -halfW; wy <= halfW; wy += 6) {
-            let ny = y + wy;
-            if (ny < 0 || ny >= cropH) continue;
-            for (let wx = -halfW; wx <= halfW; wx += 6) {
-              let nx = x + wx;
-              if (nx >= 0 && nx < cropW) {
-                sum += lumArray[ny * cropW + nx];
-                count++;
-              }
+            if (approx.rows === 4 && area > maxArea) {
+              maxArea = area;
+              if (receiptContour) receiptContour.delete();
+              receiptContour = approx;
+            } else {
+              approx.delete();
             }
           }
-
-          let localMean = sum / count;
-          let pIdx = idx * 4;
-
-          if (curLum < localMean - 10 && curLum < 170) {
-            pixels[pIdx] = 0;       // Jet Black Text
-            pixels[pIdx + 1] = 0;
-            pixels[pIdx + 2] = 0;
-          } else {
-            pixels[pIdx] = 255;     // White Paper
-            pixels[pIdx + 1] = 255;
-            pixels[pIdx + 2] = 255;
-          }
         }
+
+        let warpedMat;
+
+        // 4. Perspective Warp If 4 Corners Found
+        if (receiptContour) {
+          let points = [];
+          for (let i = 0; i < 4; i++) {
+            points.push({
+              x: receiptContour.data32S[i * 2],
+              y: receiptContour.data32S[i * 2 + 1]
+            });
+          }
+
+          warpedMat = performFourPointTransform(src, points);
+          receiptContour.delete();
+          statusBox.innerHTML = '✨ <b>4 Corners detected! Slip auto-straightened.</b>';
+        } else {
+          // Fallback if paper edges blend with background
+          warpedMat = src.clone();
+          statusBox.innerHTML = '⚠️ <b>Direct Slip processing applied.</b>';
+        }
+
+        // 5. Enhance Contrast & Binarize Text
+        let finalGray = new cv.Mat();
+        cv.cvtColor(warpedMat, finalGray, cv.COLOR_RGBA2GRAY);
+        let adaptiveThresh = new cv.Mat();
+        cv.adaptiveThreshold(finalGray, adaptiveThresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 21, 10);
+
+        // Display Result on Warped Canvas
+        cv.imshow(warpedCanvas, adaptiveThresh);
+        placeholder2.style.display = 'none';
+        warpedCanvas.style.display = 'block';
+
+        // Clean Memory
+        src.delete(); gray.delete(); blurred.delete(); edges.delete();
+        contours.delete(); hierarchy.delete(); warpedMat.delete();
+        finalGray.delete(); adaptiveThresh.delete();
+
+        runOCR();
+
+      } catch (err) {
+        console.error(err);
+        statusBox.innerHTML = '❌ OpenCV Error: ' + err.message;
       }
-
-      pCtx.putImageData(croppedData, 0, 0);
-
-      croppedPreviewImg.src = procCanvas.toDataURL('image/png');
-      placeholder2.style.display = 'none';
-      croppedPreviewImg.style.display = 'block';
-
-      sizeInfoBadge.innerText = `Original: ${origW}x${origH}px | Crop Strip: ${cropW}x${cropH}px`;
-      statusBox.innerHTML = '✨ <b>Carpet removed! Receipt strip cropped.</b> OCR scanning...';
-      
-      runOCR();
     }
 
+    // Sort 4 Points & Apply Perspective Warp Matrix
+    function performFourPointTransform(srcMat, pts) {
+      // Sort points: top-left, top-right, bottom-right, bottom-left
+      let sums = pts.map(p => p.x + p.y);
+      let diffs = pts.map(p => p.y - p.x);
+
+      let tl = pts[sums.indexOf(Math.min(...sums))];
+      let br = pts[sums.indexOf(Math.max(...sums))];
+      let tr = pts[diffs.indexOf(Math.min(...diffs))];
+      let bl = pts[diffs.indexOf(Math.max(...diffs))];
+
+      let widthA = Math.hypot(br.x - bl.x, br.y - bl.y);
+      let widthB = Math.hypot(tr.x - tl.x, tr.y - tl.y);
+      let maxWidth = Math.max(widthA, widthB);
+
+      let heightA = Math.hypot(tr.x - br.x, tr.y - br.y);
+      let heightB = Math.hypot(tl.x - bl.x, tl.y - bl.y);
+      let maxHeight = Math.max(heightA, heightB);
+
+      let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y]);
+      let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, maxWidth - 1, 0, maxWidth - 1, maxHeight - 1, 0, maxHeight - 1]);
+
+      let M = cv.getPerspectiveTransform(srcTri, dstTri);
+      let dst = new cv.Mat();
+      let dsize = new cv.Size(maxWidth, maxHeight);
+
+      cv.warpPerspective(srcMat, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+      srcTri.delete(); dstTri.delete(); M.delete();
+      return dst;
+    }
+
+    // --- TESSERACT OCR RUNNER ---
     async function runOCR() {
       laser.style.display = 'block';
 
       try {
         const result = await Tesseract.recognize(
-          procCanvas,
+          warpedCanvas,
           'eng',
           {
             logger: m => {
@@ -525,7 +492,7 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scanning Mukammal!</b> Carpet cut aur text clear hai.';
+          statusBox.innerHTML = '✅ <b>Scanning Complete!</b> Slip straighten ho kar text copy hone ke liye tayar hai.';
         } else {
           statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }
@@ -542,7 +509,7 @@
         return;
       }
       navigator.clipboard.writeText(rawOcrText.value).then(() => {
-        alert("📋 Extracted text clipboard par copy ho gaya hai!");
+        alert("📋 Straightened text clipboard par copy ho gaya hai!");
       }).catch(err => {
         alert("Copy Error: " + err);
       });

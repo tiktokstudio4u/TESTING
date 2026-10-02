@@ -2,127 +2,180 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RTA Style Shift Summary</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shift Slip OCR Scanner</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-  *{box-sizing:border-box}
-  body{
-    margin:0;background:#e9e9e9;font-family:"Courier New",monospace;
-    color:#111;
-  }
-  .toolbar{
-    position:sticky;top:0;z-index:5;background:#222;color:#fff;
-    padding:10px;text-align:center;font-family:Arial,sans-serif;
-  }
-  button{
-    border:0;border-radius:6px;padding:10px 18px;margin:0 4px;
-    background:#fff;color:#111;font-weight:700;cursor:pointer;
-  }
-  .receipt{
-    width:80mm;min-height:150mm;margin:18px auto;background:#fff;
-    padding:8mm 6mm 10mm;box-shadow:0 2px 15px #999;
-    font-size:12px;line-height:1.35;
-  }
-  .logo{
-    text-align:center;font-family:Arial,sans-serif;font-weight:900;
-    font-size:25px;letter-spacing:2px;margin-bottom:10px;
-  }
-  .logo:after{
-    content:"";display:block;width:58%;height:12px;margin:-8px auto 4px;
-    border-top:9px solid #555;border-radius:50%;
-    transform:skewX(-25deg);
-  }
-  h1{text-align:center;font-size:20px;font-weight:400;margin:8px 0 12px}
-  .dash{border-top:1px dashed #999;margin:6px 0 12px}
-  .row{
-    display:grid;grid-template-columns:1fr 4px auto;
-    column-gap:5px;min-height:18px;align-items:center;
-    white-space:pre;
-  }
-  .label{text-align:left}
-  .colon{text-align:center}
-  .value{text-align:right;min-width:72px}
-  .section-title{
-    text-align:center;font-weight:700;font-size:15px;margin:2px 0 4px;
-  }
-  input{
-    border:0;border-bottom:1px dotted #aaa;outline:0;
-    width:100%;font:inherit;background:transparent;text-align:right;
-    padding:0;margin:0;
-  }
-  .value input{min-width:72px}
-  .print-only-note{text-align:center;font-size:9px;color:#777;margin-top:8px}
-  @media print{
-    body{background:#fff}
-    .toolbar{display:none}
-    .receipt{margin:0;width:80mm;box-shadow:none;padding:5mm 5mm 8mm}
-    @page{size:80mm auto;margin:0}
-    input{border:0}
-    .print-only-note{display:none}
-  }
+*{box-sizing:border-box}
+body{margin:0;background:#eef1f3;font-family:Arial,sans-serif;color:#182019}
+.top{background:#0d3b22;color:#fff;padding:16px;text-align:center}
+.top h2{margin:0 0 5px;font-size:20px}.top p{margin:0;font-size:12px;opacity:.85}
+.app{max-width:900px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 3px 15px #0001}
+.upload{border:2px dashed #b8c4bc;border-radius:12px;padding:24px;text-align:center}
+input[type=file]{display:none}
+.pick,.scan,.clear{border:0;border-radius:9px;padding:12px 18px;font-weight:bold;cursor:pointer}
+.pick{background:#0d3b22;color:#fff}.scan{background:#c5a059;color:#111;margin-left:6px}.clear{background:#eee}
+#preview{display:none;width:100%;max-height:420px;object-fit:contain;margin-top:14px;border-radius:8px;background:#eee}
+.progress{height:10px;background:#e4e4e4;border-radius:10px;overflow:hidden;margin-top:12px}
+.bar{height:100%;width:0;background:#0d3b22;transition:.2s}
+#status{font-size:13px;margin-top:8px;text-align:center}
+table{width:100%;border-collapse:collapse;font-family:"Courier New",monospace;font-size:13px}
+th{background:#0d3b22;color:#fff;padding:9px;text-align:left}
+td{padding:6px;border-bottom:1px solid #eee}
+td input{width:100%;border:1px solid transparent;border-radius:5px;padding:5px;font:inherit;background:#fafafa}
+td input:focus{border-color:#c5a059;outline:0}
+.value{text-align:right}
+.raw{white-space:pre-wrap;background:#f6f6f6;padding:10px;border-radius:8px;font:12px "Courier New",monospace;max-height:260px;overflow:auto}
+.note{font-size:12px;color:#666;line-height:1.5}
+@media(max-width:600px){.app{padding:8px}.card{padding:10px}.scan,.clear{margin-top:8px}.upload{padding:18px}table{font-size:11px}}
 </style>
 </head>
 <body>
-
-<div class="toolbar">
-  <button onclick="window.print()">🖨 Print Slip</button>
-  <button onclick="resetSlip()">Reset</button>
+<div class="top">
+<h2>RTA Shift Slip — OCR Scanner</h2>
+<p>Picture upload → OCR scan → extracted values</p>
 </div>
 
-<div class="receipt">
-  <div class="logo">RTA</div>
-  <h1>SHIFT SUMMARY</h1>
-  <div class="dash"></div>
+<div class="app">
+<div class="card">
+<div class="upload">
+<strong>Slip ki picture upload karein</strong><br><br>
+<label class="pick" for="file">📷 Upload / Camera</label>
+<input id="file" type="file" accept="image/*" capture="environment">
+<button class="scan" id="scan" disabled>🔎 Scan Slip</button>
+<button class="clear" id="clear">Clear</button>
+<img id="preview">
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="status">Picture select karne ke baad Scan Slip dabayein.</div>
+</div>
+</div>
 
-  <div class="row"><div class="label">Plate No</div><div class="colon">:</div><div class="value"><input value="KB2617"></div></div>
-  <div class="row"><div class="label">Driver No</div><div class="colon">:</div><div class="value"><input value="3116538"></div></div>
-  <div class="row"><div class="label">Overtime</div><div class="colon">:</div><div class="value"><input value="No"></div></div>
-  <div class="row"><div class="label">Start Time</div><div class="colon">:</div><div class="value"><input value="18:07 01/10"></div></div>
-  <div class="row"><div class="label">Finish Time</div><div class="colon">:</div><div class="value"><input value="03:34 02/10"></div></div>
-  <div class="row"><div class="label">Duration</div><div class="colon">:</div><div class="value"><input value="09:27:35"></div></div>
+<div class="card">
+<h3>Extracted Data</h3>
+<p class="note">OCR ki reading 100% guaranteed nahi hoti. Neeche values editable hain taa-ke agar photo blur ho to foran correction ki ja sake.</p>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody id="results"></tbody>
+</table>
+</div>
 
-  <div class="section-title">Shift Completed</div>
-
-  <div class="row"><div class="label">Waiting Charges</div><div class="colon">:</div><div class="value"><input value="AED 35.00"></div></div>
-  <div class="row"><div class="label">Credit Cards</div><div class="colon">:</div><div class="value"><input value="AED 682.00"></div></div>
-  <div class="row"><div class="label">In-App</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">E-Payments</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">DTC-App</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Alipay</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">QR Code</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Cash</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Tips</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Total Extras</div><div class="colon">:</div><div class="value"><input value="AED 4.00"></div></div>
-  <div class="row"><div class="label">Total Sharjah</div><div class="colon">:</div><div class="value"><input value="AED 20.00"></div></div>
-  <div class="row"><div class="label">Total Tollways</div><div class="colon">:</div><div class="value"><input value="AED 52.50"></div></div>
-  <div class="row"><div class="label">Total Donations</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Total Amount</div><div class="colon">:</div><div class="value"><input value="AED 682.00"></div></div>
-  <div class="row"><div class="label">Shift Discount</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Shift Total</div><div class="colon">:</div><div class="value"><input value="AED 682.00"></div></div>
-  <div class="row"><div class="label">Shift Trips</div><div class="colon">:</div><div class="value"><input value="12"></div></div>
-  <div class="row"><div class="label">Discounted Trips</div><div class="colon">:</div><div class="value"><input value="0"></div></div>
-  <div class="row"><div class="label">Bookings</div><div class="colon">:</div><div class="value"><input value="4"></div></div>
-  <div class="row"><div class="label">Max Speed</div><div class="colon">:</div><div class="value"><input value="112 km/h"></div></div>
-  <div class="row"><div class="label">Kilometers Hired</div><div class="colon">:</div><div class="value"><input value="211.79 km"></div></div>
-  <div class="row"><div class="label">Kilometers Vacant</div><div class="colon">:</div><div class="value"><input value="115.55 km"></div></div>
-  <div class="row"><div class="label">Shift Kilometers</div><div class="colon">:</div><div class="value"><input value="327.34 km"></div></div>
-  <div class="row"><div class="label">Careem Discount</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Paid in Careem</div><div class="colon">:</div><div class="value"><input value="AED 27.50"></div></div>
-  <div class="row"><div class="label">Pax Prev. Balance</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Hala Juniors</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">Hala Peak</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">PDT Fare</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">PDT Extra</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">PDT Tolls</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-  <div class="row"><div class="label">PDT Total</div><div class="colon">:</div><div class="value"><input value="AED 0.00"></div></div>
-
-  <div class="print-only-note">Shift Summary</div>
+<div class="card">
+<h3>OCR Raw Text</h3>
+<div id="raw" class="raw">Scan ke baad original OCR text yahan ayega.</div>
+</div>
 </div>
 
 <script>
-function resetSlip(){
-  if(confirm("Reset all values to the original slip data?")) location.reload();
+const fields=[
+"Waiting Charges","Credit Cards","In-App","E-Payments","DTC-App","Alipay","QR Code","Cash","Tips",
+"Total Extras","Total Sharjah","Total Tollways","Total Donations","Total Amount","Shift Discount",
+"Shift Total","Shift Trips","Discounted Trips","Bookings","Max Speed","Kilometers Hired",
+"Kilometers Vacant","Shift Kilometers","Careem Discount","Paid in Careem","Pax Prev. Balance",
+"Hala Juniors","Hala Peak","PDT Fare","PDT Extra","PDT Tolls","PDT Total"
+];
+
+const file=document.getElementById("file"), preview=document.getElementById("preview");
+const scan=document.getElementById("scan"), clear=document.getElementById("clear");
+const status=document.getElementById("status"), bar=document.getElementById("bar");
+const raw=document.getElementById("raw"), results=document.getElementById("results");
+let selected=null;
+
+file.onchange=()=>{
+ selected=file.files[0];
+ if(!selected)return;
+ preview.src=URL.createObjectURL(selected);
+ preview.style.display="block";
+ scan.disabled=false;
+ status.textContent="Picture ready. Scan Slip dabayein.";
+};
+
+clear.onclick=()=>{
+ selected=null;file.value="";preview.style.display="none";raw.textContent="";
+ results.innerHTML="";bar.style.width="0";status.textContent="Picture select karne ke baad Scan Slip dabayein.";
+};
+
+function normalize(s){
+ return s.replace(/[|]/g,"I").replace(/[“”]/g,'"').replace(/\s+/g," ").trim();
 }
+
+function parseAmount(v){
+ let m=v.match(/(?:AED\s*)?([0-9]+(?:\.[0-9]{1,2})?)/i);
+ return m?("AED "+m[1]):v;
+}
+
+function buildResults(text){
+ let lines=text.split(/\n+/).map(normalize).filter(Boolean);
+ let out={};
+ fields.forEach(f=>{
+   let re=new RegExp("^\\s*"+f.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*[:\\-]?\\s*(.*)$","i");
+   let hit=lines.find(x=>re.test(x));
+   if(hit){
+     let m=hit.match(re); out[f]=(m&&m[1])?m[1]:"";
+   }
+ });
+ // OCR commonly breaks labels, so use contains matching as a second pass.
+ fields.forEach(f=>{
+   if(out[f]!==undefined)return;
+   let hit=lines.find(x=>x.toLowerCase().includes(f.toLowerCase()));
+   if(hit){
+     let pos=hit.toLowerCase().indexOf(f.toLowerCase());
+     out[f]=hit.slice(pos+f.length).replace(/^[\s:=-]+/,"");
+   }else out[f]="";
+ });
+ results.innerHTML=fields.map(f=>`<tr><td>${f}</td><td class="value"><input value="${escapeHtml(out[f])}" aria-label="${escapeHtml(f)}"></td></tr>`).join("");
+}
+
+function escapeHtml(s){
+ return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+async function preprocess(file){
+ return new Promise((resolve,reject)=>{
+   const img=new Image(), url=URL.createObjectURL(file);
+   img.onload=()=>{
+     const scale=Math.min(3,Math.max(1,2200/img.width));
+     const c=document.createElement("canvas");
+     c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
+     const x=c.getContext("2d");
+     x.drawImage(img,0,0,c.width,c.height);
+     const d=x.getImageData(0,0,c.width,c.height), a=d.data;
+     for(let i=0;i<a.length;i+=4){
+       const g=.299*a[i]+.587*a[i+1]+.114*a[i+2];
+       const v=g>155?255:(g<105?0:g);
+       a[i]=a[i+1]=a[i+2]=v;
+     }
+     x.putImageData(d,0,0);
+     c.toBlob(b=>{URL.revokeObjectURL(url);resolve(b)},"image/png");
+   };
+   img.onerror=reject;img.src=url;
+ });
+}
+
+scan.onclick=async()=>{
+ if(!selected)return;
+ scan.disabled=true;status.textContent="Image prepare ho rahi hai...";
+ try{
+   const img=await preprocess(selected);
+   status.textContent="OCR scanning... Please wait";
+   const worker=await Tesseract.createWorker("eng",1,{
+     logger:m=>{
+       if(m.status){
+         status.textContent=m.status+" "+(m.progress?Math.round(m.progress*100)+"%":"");
+         if(m.progress)bar.style.width=(m.progress*100)+"%";
+       }
+     }
+   });
+   const r=await worker.recognize(img);
+   await worker.terminate();
+   raw.textContent=r.data.text||"No text detected.";
+   buildResults(r.data.text||"");
+   bar.style.width="100%";
+   status.textContent="Scan complete. Neeche extracted values check kar lein.";
+ }catch(e){
+   console.error(e);status.textContent="OCR error: "+e.message;
+ }finally{scan.disabled=false}
+};
 </script>
 </body>
 </html>

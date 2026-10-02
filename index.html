@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Shift Summary Scanner - Fixed Upload Preview</title>
+  <title>RTA Receipt Precision OCR Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -27,7 +27,7 @@
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Flexible Dynamic Viewport Box */
+    /* Viewport Box */
     .viewport-box {
       position: relative;
       width: 100%;
@@ -99,13 +99,13 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Shift Summary Auto Scanner</h1>
-      <p>Instant Upload Preview & OCR Extraction</p>
+      <h1>🚖 RTA Shift Summary Precision Scanner</h1>
+      <p>High-Accuracy Thermal Receipt Data Extractor</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Receipt Viewport</span>
+        <span>📷 Receipt Preview</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
@@ -114,19 +114,19 @@
         <img id="preview-img" style="display:none;" alt="Uploaded Receipt Preview" />
         <div class="laser-line" id="laser"></div>
         <div id="placeholder" style="text-align: center; color: #94a3b8; padding: 20px;">
-          📷 "Start HD Camera" par tap karein ya photo "Upload Receipt" karein
+          📷 "Upload Receipt" par tap karke photo select karein
         </div>
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start HD Camera</button>
+        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Camera</button>
         <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
         <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Receipt</button>
         <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System ready. Receipt upload karein ya camera chalu karein.
+        ℹ️ Receipt image upload karein.
       </div>
     </div>
 
@@ -134,7 +134,7 @@
     <div class="card">
       <div class="card-title">
         <span>📋 Extracted Parameters Data</span>
-        <button class="btn btn-save" onclick="alert('Record Saved!')">💾 Save Record</button>
+        <button class="btn btn-save" onclick="alert('Record Saved Successfully!')">💾 Save Record</button>
       </div>
 
       <table>
@@ -159,12 +159,12 @@
           <tr><td><strong>Hala Juniors</strong></td><td><span id="val-hala-juniors" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Hala Peak</strong></td><td><span id="val-hala-peak" class="val-cell empty-val">Not Scanned</span></td></tr>
           <tr><td><strong>Peak</strong></td><td><span id="val-peak" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Others</strong></td><td><span id="val-others" class="val-cell empty-val">Not Scanned</span></td></tr>
+          <tr><td><strong>Others (Extras)</strong></td><td><span id="val-others" class="val-cell empty-val">Not Scanned</span></td></tr>
         </tbody>
       </table>
 
       <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;" open>
-        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned Raw OCR Text</summary>
+        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned OCR Raw Output</summary>
         <div id="raw-ocr-debug" class="debug-box">Waiting for image input...</div>
       </details>
     </div>
@@ -174,21 +174,21 @@
 
   <script>
     const targetFields = [
-      { id: "val-credit-card", keywords: ["CREDIT CARD", "CREDIT CARDS", "CREDIT"] },
+      { id: "val-credit-card", keywords: ["CREDIT CARDS", "CREDIT CARD", "CREDIT"] },
       { id: "val-app", keywords: ["IN-APP", "DTC-APP", "IN APP", "APP"] },
       { id: "val-cash", keywords: ["CASH"] },
       { id: "val-tips", keywords: ["TIPS", "TIP"] },
       { id: "val-tollways", keywords: ["TOTAL TOLLWAYS", "TOLLWAYS", "TOLL"] },
       { id: "val-shift-discount", keywords: ["SHIFT DISCOUNT", "DISCOUNT"] },
-      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TOTAL TRIPS", "TRIPS"] },
+      { id: "val-shift-trips", keywords: ["SHIFT TRIPS", "TRIPS"] },
       { id: "val-bookings", keywords: ["BOOKINGS", "BOOKING"] },
-      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED KM", "HIRED"] },
+      { id: "val-km-hired", keywords: ["KILOMETERS HIRED", "KM HIRED", "HIRED"] },
       { id: "val-careem-discount", keywords: ["CAREEM DISCOUNT"] },
       { id: "val-paid-in-careem", keywords: ["PAID IN CAREEM", "CAREEM"] },
       { id: "val-hala-juniors", keywords: ["HALA JUNIORS", "HALA JUNIOR", "JUNIORS"] },
       { id: "val-hala-peak", keywords: ["HALA PEAK"] },
       { id: "val-peak", keywords: ["PEAK"] },
-      { id: "val-others", keywords: ["OTHERS", "OTHER"] }
+      { id: "val-others", keywords: ["TOTAL EXTRAS", "EXTRAS", "OTHERS", "OTHER"] }
     ];
 
     const liveVideo = document.getElementById('live-video');
@@ -201,7 +201,6 @@
 
     let videoStream = null;
 
-    // Camera Start
     async function startLiveCamera() {
       try {
         videoStream = await navigator.mediaDevices.getUserMedia({
@@ -214,13 +213,12 @@
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera active. Capture button dabayein.</b>';
+        statusBox.innerHTML = '🟢 <b>Camera Active. Capture button dabayein.</b>';
       } catch (err) {
         alert("Camera Access Error: " + err.message);
       }
     }
 
-    // Capture Camera Frame
     function captureAndScan() {
       procCanvas.width = liveVideo.videoWidth || 1280;
       procCanvas.height = liveVideo.videoHeight || 720;
@@ -238,54 +236,57 @@
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      prepareCanvasForOCR(previewImg);
-      runOCR();
+      processImageAndScan();
     }
 
-    // FIXED File Upload Handler (Uses Instant Object URL)
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      statusBox.innerHTML = '⏳ <b>Receipt photo preview me load ho rahi hai...</b>';
-
-      // Direct Blob URL generation (Instant rendering without memory lag)
+      statusBox.innerHTML = '⏳ <b>Photo load ho rahi hai...</b>';
       const objectUrl = URL.createObjectURL(file);
 
       placeholder.style.display = 'none';
       liveVideo.style.display = 'none';
 
-      // Event listener fires ONLY when image is fully loaded in DOM
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Photo ready. Scanning started...</b>';
-
-        // Prepare background canvas for OCR
-        prepareCanvasForOCR(previewImg);
-        runOCR();
+        statusBox.innerHTML = '⚙️ <b>Image enhance ho rahi hai. Scan shuru...</b>';
+        processImageAndScan();
       };
 
-      previewImg.onerror = function() {
-        statusBox.innerHTML = '❌ <b>Image display error. Please re-select the image.</b>';
-      };
-
-      // Set image source
       previewImg.src = objectUrl;
     }
 
-    // Prepare clean image array for OCR processing
-    function prepareCanvasForOCR(imgElement) {
-      const w = imgElement.naturalWidth || imgElement.width || 1280;
-      const h = imgElement.naturalHeight || imgElement.height || 720;
-      
+    // 1. High-Contrast Binarization & 2x Upscaling for Thermal Receipts
+    function processImageAndScan() {
+      const scale = 2; // Double resolution for thermal dots
+      const w = (previewImg.naturalWidth || previewImg.width || 800) * scale;
+      const h = (previewImg.naturalHeight || previewImg.height || 1200) * scale;
+
       procCanvas.width = w;
       procCanvas.height = h;
-      
+
       const ctx = procCanvas.getContext('2d');
-      ctx.drawImage(imgElement, 0, 0, w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(previewImg, 0, 0, w, h);
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      // Adaptive Black & White Binarization Filter
+      for (let i = 0; i < data.length; i += 4) {
+        let gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+        let val = gray < 145 ? 0 : 255; // Convert thermal dots into solid black
+        data[i] = data[i+1] = data[i+2] = val;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      runOCR();
     }
 
-    // Run Tesseract OCR Engine
+    // 2. Tesseract OCR Engine
     async function runOCR() {
       laser.style.display = 'block';
 
@@ -297,7 +298,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Reading Receipt Text: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Reading Thermal Text: ${prog}%</b>`;
               }
             }
           }
@@ -309,9 +310,9 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scan Complete! Data auto-filled below.</b>';
+          statusBox.innerHTML = '✅ <b>Scan Complete! Values auto-filled in table.</b>';
         } else {
-          statusBox.innerHTML = '⚠️ <b>Text not detected clearly. Try uploading a clearer photo.</b>';
+          statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka. Photo saaf lein.</b>';
         }
 
       } catch (err) {
@@ -320,7 +321,7 @@
       }
     }
 
-    // Parse Values into Table
+    // 3. Smart Extraction Logic with Typo Cleaning (e.g. 'O' -> '0')
     function parseAndPopulateData(rawText) {
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 
@@ -328,20 +329,28 @@
         let extractedVal = null;
 
         for (let i = 0; i < lines.length; i++) {
-          const upper = lines[i].toUpperCase();
-          const matchedKey = field.keywords.find(kw => upper.includes(kw));
+          const upperLine = lines[i].toUpperCase();
+          const matchedKey = field.keywords.find(kw => upperLine.includes(kw));
 
           if (matchedKey) {
-            let lineText = lines[i];
+            // Check current line and next 1 line for values
+            let targetText = lines[i] + " " + (lines[i+1] || "");
 
-            let numbers = lineText.match(/[\d]+[\.\,]?[\d]*/g);
-            if (numbers && numbers.length > 0) {
-              extractedVal = numbers[numbers.length - 1];
-            } else if (i + 1 < lines.length) {
-              let nextNumbers = lines[i + 1].match(/[\d]+[\.\,]?[\d]*/g);
-              if (nextNumbers && nextNumbers.length > 0) {
-                extractedVal = nextNumbers[0];
-              }
+            // Remove non-numeric noise like 'AED', 'km/h', 'km'
+            let cleaned = targetText
+              .replace(/AED/gi, '')
+              .replace(/km\/h/gi, '')
+              .replace(/km/gi, '')
+              .replace(/:/g, ' ')
+              .replace(/Shift In Progres/gi, '');
+
+            // Fix common thermal OCR typos ('O'/'o' mistaked for '0')
+            cleaned = cleaned.replace(/(\d)[O|o]/g, '$10').replace(/[O|o](\d)/g, '0$1');
+
+            // Regex for integers & decimal numbers
+            let matches = cleaned.match(/\d+[\.\,]?\d*/g);
+            if (matches && matches.length > 0) {
+              extractedVal = matches[matches.length - 1].replace(',', '.');
             }
 
             if (extractedVal) break;
@@ -350,7 +359,7 @@
 
         const cell = document.getElementById(field.id);
         if (cell) {
-          if (extractedVal) {
+          if (extractedVal !== null) {
             cell.innerText = extractedVal;
             cell.classList.remove('empty-val');
             cell.style.color = '#16a34a';

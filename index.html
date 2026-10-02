@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Shift Summary Advanced AI Scanner</title>
+  <title>RTA Auto-Crop & AI Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -27,24 +27,48 @@
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Box */
+    /* Viewport Boxes */
+    .viewports-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    @media (max-width: 650px) {
+      .viewports-grid { grid-template-columns: 1fr; }
+    }
+
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 300px;
-      max-height: 520px;
+      min-height: 260px;
+      max-height: 400px;
       background: #0f172a;
       border-radius: 12px;
       overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       border: 2px solid var(--border);
     }
 
+    .viewport-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #38bdf8;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      z-index: 5;
+    }
+
     video, img {
       max-width: 100%;
-      max-height: 500px;
+      max-height: 380px;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -98,22 +122,36 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Shift Summary AI Scanner</h1>
-      <p>Fuzzy OCR Parsing & Error Correction Engine</p>
+      <h1>🚖 RTA Receipt Scanner (Auto-Crop & Auto-Adjust)</h1>
+      <p>Auto Paper Boundary Detection & High-Contrast OCR System</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Receipt Viewport</span>
+        <span>📷 Live Viewport & Auto-Cropping</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
-      <div class="viewport-box">
-        <video id="live-video" autoplay playsinline style="display:none;"></video>
-        <img id="preview-img" style="display:none;" alt="Uploaded Receipt Preview" />
-        <div class="laser-line" id="laser"></div>
-        <div id="placeholder" style="text-align: center; color: #94a3b8; padding: 20px;">
-          📷 Photo Upload Karein Ya Camera Start Karein
+      <!-- Side-by-Side Dual Viewport -->
+      <div class="viewports-grid">
+        <!-- 1. Original Image / Camera View -->
+        <div class="viewport-box">
+          <div class="viewport-label">1. Original Input</div>
+          <video id="live-video" autoplay playsinline style="display:none;"></video>
+          <img id="preview-img" style="display:none;" alt="Original Receipt" />
+          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
+            📷 Photo Upload Karein Ya Camera On Karein
+          </div>
+        </div>
+
+        <!-- 2. Auto-Cropped & Adjusted Image View -->
+        <div class="viewport-box">
+          <div class="viewport-label">2. Auto-Cropped & Adjusted</div>
+          <img id="cropped-preview-img" style="display:none;" alt="Auto Cropped Receipt" />
+          <div class="laser-line" id="laser"></div>
+          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
+            ⚡ Auto-Crop aur Auto-Adjustment Yahan Dikhayi Dega
+          </div>
         </div>
       </div>
 
@@ -125,7 +163,7 @@
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Photo select karein.
+        ℹ️ System Ready. Image upload karein.
       </div>
     </div>
 
@@ -163,8 +201,8 @@
       </table>
 
       <details style="margin-top: 15px; font-size: 0.8rem; color: #64748b;" open>
-        <summary style="cursor: pointer; font-weight: bold;">🔍 Scanned Raw OCR Text</summary>
-        <div id="raw-ocr-debug" class="debug-box">Waiting for image input...</div>
+        <summary style="cursor: pointer; font-weight: bold;">🔍 Raw OCR Extracted Text</summary>
+        <div id="raw-ocr-debug" class="debug-box">Waiting for image processing...</div>
       </details>
     </div>
   </div>
@@ -172,7 +210,6 @@
   <canvas id="proc-canvas" style="display:none;"></canvas>
 
   <script>
-    // Robust Fuzzy Keywords Matching Table
     const targetFields = [
       { id: "val-credit-card", patterns: [/cred/i, /cards?/i, /SATIN/i] },
       { id: "val-app", patterns: [/in-?app/i, /dtc-?app/i] },
@@ -193,7 +230,9 @@
 
     const liveVideo = document.getElementById('live-video');
     const previewImg = document.getElementById('preview-img');
-    const placeholder = document.getElementById('placeholder');
+    const croppedPreviewImg = document.getElementById('cropped-preview-img');
+    const placeholder1 = document.getElementById('placeholder-1');
+    const placeholder2 = document.getElementById('placeholder-2');
     const procCanvas = document.getElementById('proc-canvas');
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
@@ -207,13 +246,13 @@
           video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
         });
         liveVideo.srcObject = videoStream;
-        placeholder.style.display = 'none';
+        placeholder1.style.display = 'none';
         previewImg.style.display = 'none';
         liveVideo.style.display = 'block';
 
         document.getElementById('btn-start-cam').style.display = 'none';
         document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Active.</b>';
+        statusBox.innerHTML = '🟢 <b>Camera Active.</b> Receipt ko samne rakhein.';
       } catch (err) {
         alert("Camera Error: " + err.message);
       }
@@ -236,7 +275,7 @@
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      processImageAndScan();
+      processAndAutoCrop();
     }
 
     function handleFileSelect(event) {
@@ -246,42 +285,97 @@
       statusBox.innerHTML = '⏳ <b>Photo load ho rahi hai...</b>';
       const objectUrl = URL.createObjectURL(file);
 
-      placeholder.style.display = 'none';
+      placeholder1.style.display = 'none';
       liveVideo.style.display = 'none';
 
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Scanning shuru...</b>';
-        processImageAndScan();
+        statusBox.innerHTML = '⚙️ <b>Auto-Crop & Adjust Process ho raha hai...</b>';
+        processAndAutoCrop();
       };
 
       previewImg.src = objectUrl;
     }
 
-    function processImageAndScan() {
-      const scale = 2;
-      const w = (previewImg.naturalWidth || previewImg.width || 800) * scale;
-      const h = (previewImg.naturalHeight || previewImg.height || 1200) * scale;
+    // --- AUTO CROP & AUTO ADJUST ENGINE ---
+    function processAndAutoCrop() {
+      const w = previewImg.naturalWidth || previewImg.width;
+      const h = previewImg.naturalHeight || previewImg.height;
 
-      procCanvas.width = w;
-      procCanvas.height = h;
+      // 1. Temp canvas for original image analysis
+      const origCanvas = document.createElement('canvas');
+      origCanvas.width = w;
+      origCanvas.height = h;
+      const oCtx = origCanvas.getContext('2d');
+      oCtx.drawImage(previewImg, 0, 0, w, h);
 
-      const ctx = procCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(previewImg, 0, 0, w, h);
-
-      const imgData = ctx.getImageData(0, 0, w, h);
+      const imgData = oCtx.getImageData(0, 0, w, h);
       const data = imgData.data;
 
-      // High-contrast Binarization for thermal printer dots
-      for (let i = 0; i < data.length; i += 4) {
-        let gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-        let val = gray < 150 ? 0 : 255;
-        data[i] = data[i+1] = data[i+2] = val;
+      // 2. Paper Bounding Box Detectors (Auto Crop logic)
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+      let foundPaper = false;
+
+      for (let y = 0; y < h; y += 4) {
+        for (let x = 0; x < w; x += 4) {
+          let i = (y * w + x) * 4;
+          let r = data[i], g = data[i+1], b = data[i+2];
+          let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          // Receipt thermal paper is typically lighter/brighter than background
+          if (brightness > 60) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            foundPaper = true;
+          }
+        }
       }
 
-      ctx.putImageData(imgData, 0, 0);
+      // If bounds valid, apply padding & crop
+      if (!foundPaper || (maxX - minX < 100) || (maxY - minY < 100)) {
+        minX = 0; minY = 0; maxX = w; maxY = h;
+      } else {
+        const padX = Math.round(w * 0.02);
+        const padY = Math.round(h * 0.02);
+        minX = Math.max(0, minX - padX);
+        minY = Math.max(0, minY - padY);
+        maxX = Math.min(w, maxX + padX);
+        maxY = Math.min(h, maxY + padY);
+      }
+
+      const cropW = maxX - minX;
+      const cropH = maxY - minY;
+
+      // 3. Render Auto-Cropped image to processing canvas
+      procCanvas.width = cropW;
+      procCanvas.height = cropH;
+      const pCtx = procCanvas.getContext('2d');
+      pCtx.drawImage(origCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+      // 4. Auto Image Adjust (High Contrast Binarization)
+      const croppedData = pCtx.getImageData(0, 0, cropW, cropH);
+      const cPixels = croppedData.data;
+
+      for (let i = 0; i < cPixels.length; i += 4) {
+        let gray = 0.299 * cPixels[i] + 0.587 * cPixels[i+1] + 0.114 * cPixels[i+2];
+        // Binarize text dots vs background
+        let val = gray < 145 ? 0 : 255;
+        cPixels[i] = val;
+        cPixels[i+1] = val;
+        cPixels[i+2] = val;
+      }
+      pCtx.putImageData(croppedData, 0, 0);
+
+      // 5. Update UI Preview Box with Auto-Cropped & Adjusted Image
+      croppedPreviewImg.src = procCanvas.toDataURL('image/png');
+      placeholder2.style.display = 'none';
+      croppedPreviewImg.style.display = 'block';
+
+      statusBox.innerHTML = '✨ <b>Auto-Cropped & Adjusted!</b> Ab OCR scanning shuru ho rahi hai...';
+      
+      // 6. Run OCR on cropped & preprocessed image
       runOCR();
     }
 
@@ -308,9 +402,9 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Data successfully extracted & corrected!</b>';
+          statusBox.innerHTML = '✅ <b>Auto-Crop, Adjustment aur Scanning Mukammal!</b>';
         } else {
-          statusBox.innerHTML = '⚠️ <b>Text read nahi hua.</b>';
+          statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }
 
       } catch (err) {
@@ -319,13 +413,12 @@
       }
     }
 
-    // Advanced Text & Number Cleaning Engine
     function cleanOCRNoise(str) {
       return str
         .replace(/AED|AFD|CALL|SEP|CA|CL/gi, ' ')
-        .replace(/4\/8/g, '478') // Thermal slash correction
-        .replace(/(\d+)\s*\.\s*(\d+)/g, '$1.$2') // Join broken decimals like "63. 36" -> "63.36"
-        .replace(/(\d+)\s+(\d{2})\b/g, '$1.$2') // "478 50" -> "478.50"
+        .replace(/4\/8/g, '478')
+        .replace(/(\d+)\s*\.\s*(\d+)/g, '$1.$2')
+        .replace(/(\d+)\s+(\d{2})\b/g, '$1.$2')
         .replace(/[\:\=]/g, ' ');
     }
 
@@ -340,15 +433,11 @@
           const isMatched = field.patterns.some(pattern => pattern.test(lineStr));
 
           if (isMatched) {
-            // Check current line and next line for number
             let combined = cleanOCRNoise(lineStr + " " + (lines[i+1] || ""));
-
-            // Extract numeric pattern
             let matches = combined.match(/\d+[\.\,]?\d*/g);
             if (matches && matches.length > 0) {
               extractedVal = matches[matches.length - 1].replace(',', '.');
             }
-
             if (extractedVal) break;
           }
         }

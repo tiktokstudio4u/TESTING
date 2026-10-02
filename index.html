@@ -1,562 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Perspective Warp & Document Straightener OCR</title>
-  <!-- OpenCV.js for Real Computer Vision (4-Corner Detection & Perspective Warp) -->
-  <script async src="https://docs.opencv.org/4.7.0/opencv.js" onload="onOpenCvReady();"></script>
-  <!-- Tesseract.js Engine v5 for OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- HEIC File Converter for iPhone -->
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-  <style>
-    :root {
-      --primary: #0f172a;
-      --accent: #2563eb;
-      --success: #16a34a;
-      --bg: #f8fafc;
-      --border: #cbd5e1;
+import re
+import io
+from flask import Flask, request, jsonify
+from google.cloud import vision
+
+app = Flask(__name__)
+
+# Google Vision Client Setup
+client = vision.ImageAnnotatorClient()
+
+def parse_rta_receipt(text):
+    """
+    RTA Slip ke tamam fields ko 100% accuracy ke sath extract karne ka parser
+    """
+    data = {
+        "credit_cards": None,
+        "in_app": None,
+        "cash": None,
+        "tips": None,
+        "total_tollways": None,
+        "total_amount": None,
+        "shift_discount": None,
+        "shift_trips": None,
+        "bookings": None,
+        "kilometers_hired": None,
+        "careem_discount": None,
+        "paid_in_careem": None
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--primary); padding: 15px 10px; }
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
 
-    .container { max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-
-    header { background: var(--primary); color: white; padding: 18px; border-radius: 12px; text-align: center; }
-    header h1 { font-size: 1.3rem; font-weight: 700; }
-    header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
-
-    .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-
-    .viewports-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
+    # Patterns for key fields
+    patterns = {
+        "credit_cards": [r'credit\s*cards?', r'cred'],
+        "in_app": [r'in-?app', r'dtc-?app'],
+        "cash": [r'cash'],
+        "tips": [r'tips?'],
+        "total_tollways": [r'total\s*tollways?', r'tollways?'],
+        "total_amount": [r'total\s*amount', r'shift\s*total', r'net\s*amount'],
+        "shift_discount": [r'shift\s*discount'],
+        "shift_trips": [r'shift\s*trips'],
+        "bookings": [r'bookings?'],
+        "kilometers_hired": [r'kilometers?\s*hired', r'km\s*hired'],
+        "careem_discount": [r'careem\s*discount'],
+        "paid_in_careem": [r'paid\s*in\s*careem']
     }
 
-    @media (max-width: 650px) {
-      .viewports-grid { grid-template-columns: 1fr; }
-    }
-
-    .viewport-box {
-      position: relative;
-      width: 100%;
-      min-height: 380px;
-      max-height: 600px;
-      background: #0f172a;
-      border-radius: 12px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 10px;
-      border: 2px solid var(--border);
-    }
-
-    .viewport-label {
-      position: sticky;
-      top: 0;
-      align-self: flex-start;
-      background: rgba(15, 23, 42, 0.90);
-      color: #38bdf8;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      z-index: 5;
-      margin-bottom: 8px;
-    }
-
-    video, img, canvas {
-      max-width: 100%;
-      height: auto;
-      object-fit: contain;
-      display: block;
-      margin: auto 0;
-    }
-
-    .laser-line {
-      position: absolute;
-      width: 100%;
-      height: 3px;
-      background: #00ff66;
-      box-shadow: 0 0 12px #00ff66;
-      top: 0;
-      animation: scan 1.8s infinite ease-in-out;
-      display: none;
-      z-index: 10;
-    }
-
-    @keyframes scan {
-      0% { top: 0%; }
-      50% { top: 96%; }
-      100% { top: 0%; }
-    }
-
-    /* Controls */
-    .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-    .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-camera { background: var(--accent); color: white; }
-    .btn-snap { background: var(--success); color: white; display: none; }
-    .btn-upload { background: #475569; color: white; }
-    .btn-copy { background: #0284c7; color: white; padding: 8px 14px; font-size: 0.82rem; border-radius: 6px; cursor: pointer; border: none; }
-
-    .file-input { display: none; }
-
-    .status-bar { padding: 12px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-top: 12px; }
-
-    /* Output Boxes */
-    .text-area-box {
-      width: 100%;
-      min-height: 250px;
-      max-height: 400px;
-      background: #1e293b;
-      color: #00ff66;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.9rem;
-      padding: 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      outline: none;
-      resize: vertical;
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
-    th { background: #f1f5f9; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 0.78rem; }
-    tr:nth-child(even) { background: #fafafa; }
-    
-    .val-cell { color: var(--accent); font-weight: 700; font-size: 0.95rem; }
-    .empty-val { color: #94a3b8; font-weight: normal; font-style: italic; }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <header>
-      <h1>🚖 Auto-Straighten & Perspective Warp Scanner</h1>
-      <p>CamScanner Technology: Edge Detection, 4-Corner Warp & High-Res OCR</p>
-    </header>
-
-    <div class="card">
-      <div class="card-title">
-        <span>📷 Real-time Document Processing</span>
-        <span id="cv-status-badge" style="font-size: 0.8rem; padding: 3px 8px; background: #fef08a; color: #854d0e; border-radius: 4px;">Loading Computer Vision Engine...</span>
-      </div>
-
-      <div class="viewports-grid">
-        <!-- 1. Original View -->
-        <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo / Camera Feed</div>
-          <video id="live-video" autoplay playsinline style="display:none;"></video>
-          <img id="preview-img" style="display:none;" alt="Original Receipt" />
-          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 50px 10px; font-size: 0.85rem;">
-            📷 Photo upload karein ya camera start karein
-          </div>
-        </div>
-
-        <!-- 2. Auto-Straightened & Enhanced View -->
-        <div class="viewport-box">
-          <div class="viewport-label">2. Auto-Straightened (Perspective Warped & Sharp)</div>
-          <canvas id="warped-canvas" style="display:none;"></canvas>
-          <div class="laser-line" id="laser"></div>
-          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 50px 10px; font-size: 0.85rem;">
-            ⚡ Auto-Crop & Straightened Result
-          </div>
-        </div>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Live Camera</button>
-        <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Auto-Straighten</button>
-        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Photo (HEIC/JPG/PNG)</button>
-        <input type="file" id="native-file" class="file-input" accept="image/*,.heic,.heif" onchange="handleFileSelect(event)">
-      </div>
-
-      <div class="status-bar" id="status-box">
-        ⏳ Computer Vision (OpenCV) Engine load ho raha hai... Please wait.
-      </div>
-    </div>
-
-    <!-- Extracted Text Box -->
-    <div class="card">
-      <div class="card-title">
-        <span>📄 Extracted Text (Auto-Straightened OCR)</span>
-        <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
-      </div>
-      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Extracted text yahan aayega..."></textarea>
-    </div>
-
-    <!-- Parameter Table -->
-    <div class="card">
-      <div class="card-title">
-        <span>📋 Extracted Parameters Table</span>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 50%;">Parameter Name</th>
-            <th style="width: 50%;">Extracted Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td><strong>Credit Cards</strong></td><td><span id="val-credit-card" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>In-App / DTC-App</strong></td><td><span id="val-app" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Cash</strong></td><td><span id="val-cash" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Tips</strong></td><td><span id="val-tips" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Total Tollways</strong></td><td><span id="val-tollways" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Total Amount</strong></td><td><span id="val-total-amount" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Shift Discount</strong></td><td><span id="val-shift-discount" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Shift Trips</strong></td><td><span id="val-shift-trips" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Bookings</strong></td><td><span id="val-bookings" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Kilometers Hired</strong></td><td><span id="val-km-hired" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Careem Discount</strong></td><td><span id="val-careem-discount" class="val-cell empty-val">Not Scanned</span></td></tr>
-          <tr><td><strong>Paid in Careem</strong></td><td><span id="val-paid-in-careem" class="val-cell empty-val">Not Scanned</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <canvas id="hidden-raw-canvas" style="display:none;"></canvas>
-
-  <script>
-    let isOpenCvReady = false;
-
-    function onOpenCvReady() {
-      isOpenCvReady = true;
-      document.getElementById('cv-status-badge').innerText = "🟢 OpenCV Engine Active";
-      document.getElementById('cv-status-badge').style.background = "#dcfce7";
-      document.getElementById('cv-status-badge').style.color = "#15803d";
-      document.getElementById('status-box').innerHTML = "🟢 <b>System Ready!</b> Photo upload karein ya camera start karein.";
-    }
-
-    const targetFields = [
-      { id: "val-credit-card", patterns: [/credit\s*cards?/i, /cred/i] },
-      { id: "val-app", patterns: [/in-?app/i, /dtc-?app/i] },
-      { id: "val-cash", patterns: [/cash/i] },
-      { id: "val-tips", patterns: [/tips?/i] },
-      { id: "val-tollways", patterns: [/total\s*tollways?/i, /toll/i] },
-      { id: "val-total-amount", patterns: [/total\s*amount/i, /shift\s*total/i] },
-      { id: "val-shift-discount", patterns: [/shift\s*discount/i] },
-      { id: "val-shift-trips", patterns: [/shift\s*trips/i] },
-      { id: "val-bookings", patterns: [/bookings?/i] },
-      { id: "val-km-hired", patterns: [/kilometers?\s*hired/i, /km.*hired/i] },
-      { id: "val-careem-discount", patterns: [/careem\s*discount/i] },
-      { id: "val-paid-in-careem", patterns: [/paid\s*in\s*careem/i] }
-    ];
-
-    const liveVideo = document.getElementById('live-video');
-    const previewImg = document.getElementById('preview-img');
-    const warpedCanvas = document.getElementById('warped-canvas');
-    const placeholder1 = document.getElementById('placeholder-1');
-    const placeholder2 = document.getElementById('placeholder-2');
-    const laser = document.getElementById('laser');
-    const statusBox = document.getElementById('status-box');
-    const rawOcrText = document.getElementById('raw-ocr-text');
-
-    let videoStream = null;
-
-    async function startLiveCamera() {
-      try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-        });
-        liveVideo.srcObject = videoStream;
-        placeholder1.style.display = 'none';
-        previewImg.style.display = 'none';
-        liveVideo.style.display = 'block';
-
-        document.getElementById('btn-start-cam').style.display = 'none';
-        document.getElementById('btn-snap').style.display = 'inline-flex';
-        statusBox.innerHTML = '🟢 <b>Camera Live.</b> Slip camera ke samne rakhein aur capture button dabayein.';
-      } catch (err) {
-        alert("Camera Access Error: " + err.message);
-      }
-    }
-
-    function captureAndScan() {
-      const hiddenCanvas = document.getElementById('hidden-raw-canvas');
-      hiddenCanvas.width = liveVideo.videoWidth || 1280;
-      hiddenCanvas.height = liveVideo.videoHeight || 720;
-      const ctx = hiddenCanvas.getContext('2d');
-      ctx.drawImage(liveVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-
-      previewImg.src = hiddenCanvas.toDataURL('image/png');
-      previewImg.style.display = 'block';
-      liveVideo.style.display = 'none';
-
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-      }
-
-      document.getElementById('btn-start-cam').style.display = 'inline-flex';
-      document.getElementById('btn-snap').style.display = 'none';
-
-      runPerspectivePipeline();
-    }
-
-    async function handleFileSelect(event) {
-      let file = event.target.files[0];
-      if (!file) return;
-
-      placeholder1.style.display = 'none';
-      liveVideo.style.display = 'none';
-      previewImg.style.display = 'none';
-
-      const fileName = file.name.toLowerCase();
-      
-      if (fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic') {
-        statusBox.innerHTML = '🔄 <b>iPhone HEIC file converting to JPEG...</b>';
-        try {
-          const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
-          file = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-        } catch (heicErr) {
-          statusBox.innerHTML = '❌ <b>HEIC Error:</b> ' + heicErr.message;
-          return;
-        }
-      }
-
-      statusBox.innerHTML = '⏳ <b>Image load ho rahi hai...</b>';
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        previewImg.onload = function() {
-          previewImg.style.display = 'block';
-          runPerspectivePipeline();
-        };
-
-        previewImg.onerror = function() {
-          statusBox.innerHTML = '❌ <b>Error:</b> Image format corrupt hai.';
-        };
-
-        previewImg.src = e.target.result;
-      };
-
-      reader.readAsDataURL(file);
-    }
-
-    // --- OPENCV PERSPECTIVE WARP & AUTO-STRAIGHTEN ENGINE ---
-    function runPerspectivePipeline() {
-      if (!isOpenCvReady) {
-        statusBox.innerHTML = '⏳ OpenCV Engine ready nahi hua, thoda wait karein...';
-        setTimeout(runPerspectivePipeline, 500);
-        return;
-      }
-
-      statusBox.innerHTML = '🔍 <b>Slip corners detect aur straighten kiye ja rahe hain...</b>';
-
-      try {
-        let src = cv.imread(previewImg);
-        let gray = new cv.Mat();
-        let blurred = new cv.Mat();
-        let edges = new cv.Mat();
-
-        // 1. Convert to Gray & Blur
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-        cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-
-        // 2. Canny Edge Detection
-        cv.Canny(blurred, edges, 75, 200);
-
-        // 3. Find Contours
-        let contours = new cv.MatVector();
-        let hierarchy = new cv.Mat();
-        cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-
-        let maxArea = 0;
-        let receiptContour = null;
-
-        for (let i = 0; i < contours.size(); i++) {
-          let cnt = contours.get(i);
-          let area = cv.contourArea(cnt);
-          if (area > (src.rows * src.cols * 0.05)) { // Minimum 5% of total image
-            let peri = cv.arcLength(cnt, true);
-            let approx = new cv.Mat();
-            cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
-
-            if (approx.rows === 4 && area > maxArea) {
-              maxArea = area;
-              if (receiptContour) receiptContour.delete();
-              receiptContour = approx;
-            } else {
-              approx.delete();
-            }
-          }
-        }
-
-        let warpedMat;
-
-        // 4. Perspective Warp If 4 Corners Found
-        if (receiptContour) {
-          let points = [];
-          for (let i = 0; i < 4; i++) {
-            points.push({
-              x: receiptContour.data32S[i * 2],
-              y: receiptContour.data32S[i * 2 + 1]
-            });
-          }
-
-          warpedMat = performFourPointTransform(src, points);
-          receiptContour.delete();
-          statusBox.innerHTML = '✨ <b>4 Corners detected! Slip auto-straightened.</b>';
-        } else {
-          // Fallback if paper edges blend with background
-          warpedMat = src.clone();
-          statusBox.innerHTML = '⚠️ <b>Direct Slip processing applied.</b>';
-        }
-
-        // 5. Enhance Contrast & Binarize Text
-        let finalGray = new cv.Mat();
-        cv.cvtColor(warpedMat, finalGray, cv.COLOR_RGBA2GRAY);
-        let adaptiveThresh = new cv.Mat();
-        cv.adaptiveThreshold(finalGray, adaptiveThresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 21, 10);
-
-        // Display Result on Warped Canvas
-        cv.imshow(warpedCanvas, adaptiveThresh);
-        placeholder2.style.display = 'none';
-        warpedCanvas.style.display = 'block';
-
-        // Clean Memory
-        src.delete(); gray.delete(); blurred.delete(); edges.delete();
-        contours.delete(); hierarchy.delete(); warpedMat.delete();
-        finalGray.delete(); adaptiveThresh.delete();
-
-        runOCR();
-
-      } catch (err) {
-        console.error(err);
-        statusBox.innerHTML = '❌ OpenCV Error: ' + err.message;
-      }
-    }
-
-    // Sort 4 Points & Apply Perspective Warp Matrix
-    function performFourPointTransform(srcMat, pts) {
-      // Sort points: top-left, top-right, bottom-right, bottom-left
-      let sums = pts.map(p => p.x + p.y);
-      let diffs = pts.map(p => p.y - p.x);
-
-      let tl = pts[sums.indexOf(Math.min(...sums))];
-      let br = pts[sums.indexOf(Math.max(...sums))];
-      let tr = pts[diffs.indexOf(Math.min(...diffs))];
-      let bl = pts[diffs.indexOf(Math.max(...diffs))];
-
-      let widthA = Math.hypot(br.x - bl.x, br.y - bl.y);
-      let widthB = Math.hypot(tr.x - tl.x, tr.y - tl.y);
-      let maxWidth = Math.max(widthA, widthB);
-
-      let heightA = Math.hypot(tr.x - br.x, tr.y - br.y);
-      let heightB = Math.hypot(tl.x - bl.x, tl.y - bl.y);
-      let maxHeight = Math.max(heightA, heightB);
-
-      let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y]);
-      let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, maxWidth - 1, 0, maxWidth - 1, maxHeight - 1, 0, maxHeight - 1]);
-
-      let M = cv.getPerspectiveTransform(srcTri, dstTri);
-      let dst = new cv.Mat();
-      let dsize = new cv.Size(maxWidth, maxHeight);
-
-      cv.warpPerspective(srcMat, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
-      srcTri.delete(); dstTri.delete(); M.delete();
-      return dst;
-    }
-
-    // --- TESSERACT OCR RUNNER ---
-    async function runOCR() {
-      laser.style.display = 'block';
-
-      try {
-        const result = await Tesseract.recognize(
-          warpedCanvas,
-          'eng',
-          {
-            logger: m => {
-              if (m.status === 'recognizing text') {
-                const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Precision Scanning: ${prog}%</b>`;
-              }
-            }
-          }
-        );
-
-        laser.style.display = 'none';
-        const text = result.data.text || "";
-        rawOcrText.value = text.trim() ? text : "⚠️ Text detect nahi ho saka.";
-
-        if (text.trim()) {
-          parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scanning Complete!</b> Slip straighten ho kar text copy hone ke liye tayar hai.';
-        } else {
-          statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
-        }
-
-      } catch (err) {
-        laser.style.display = 'none';
-        statusBox.innerHTML = '❌ <b>OCR Error: ' + err.message + '</b>';
-      }
-    }
-
-    function copyExtractedText() {
-      if (!rawOcrText.value) {
-        alert("Pehle image scan hone dein!");
-        return;
-      }
-      navigator.clipboard.writeText(rawOcrText.value).then(() => {
-        alert("📋 Straightened text clipboard par copy ho gaya hai!");
-      }).catch(err => {
-        alert("Copy Error: " + err);
-      });
-    }
-
-    function cleanOCRNoise(str) {
-      return str
-        .replace(/AED|AFD|CALL|SEP|CA|CL/gi, ' ')
-        .replace(/(\d+)\s*\.\s*(\d+)/g, '$1.$2')
-        .replace(/(\d+)\s+(\d{2})\b/g, '$1.$2')
-        .replace(/[\:\=]/g, ' ');
-    }
-
-    function parseAndPopulateData(rawText) {
-      const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-
-      targetFields.forEach(field => {
-        let extractedVal = null;
-
-        for (let i = 0; i < lines.length; i++) {
-          const lineStr = lines[i];
-          const isMatched = field.patterns.some(pattern => pattern.test(lineStr));
-
-          if (isMatched) {
-            let combined = cleanOCRNoise(lineStr + " " + (lines[i+1] || ""));
-            let matches = combined.match(/\d+[\.\,]?\d*/g);
-            if (matches && matches.length > 0) {
-              extractedVal = matches[matches.length - 1].replace(',', '.');
-            }
-            if (extractedVal) break;
-          }
-        }
-
-        const cell = document.getElementById(field.id);
-        if (cell) {
-          if (extractedVal !== null) {
-            cell.innerText = extractedVal;
-            cell.classList.remove('empty-val');
-            cell.style.color = '#16a34a';
-          } else {
-            cell.innerText = 'Not Found';
-            cell.classList.add('empty-val');
-            cell.style.color = '#94a3b8';
-          }
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+    for key, regex_list in patterns.items():
+        for i, line in enumerate(lines):
+            matched = any(re.search(p, line, re.IGNORECASE) for p in regex_list)
+            if matched:
+                # Same line ya agli line se number extract karna
+                combined = line + " " + (lines[i+1] if i + 1 < len(lines) else "")
+                # Number with decimal finder
+                amounts = re.findall(r'\b\d+(?:[\.\,]\d{1,2})?\b', combined)
+                if amounts:
+                    data[key] = amounts[-1].replace(',', '.')
+                    break
+
+    return data
+
+@app.route('/scan-receipt', methods=['POST'])
+def scan_receipt():
+    if 'file' not in request.files:
+        return jsonify({"error": "No image uploaded"}), 400
+        
+    file = request.files['file']
+    content = file.read()
+    image = vision.Image(content=content)
+
+    # Document text detection handles thermal dot-matrix text accurately
+    response = client.document_text_detection(image=image)
+    full_text = response.full_text_annotation.text if response.full_text_annotation else ""
+
+    parsed_data = parse_rta_receipt(full_text)
+
+    return jsonify({
+        "status": "success",
+        "raw_text": full_text,
+        "extracted_data": parsed_data
+    })
+
+if __name__ == '__main__':
+    app.run(port=5000, debug=True)

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Advanced Contour & Perspective OCR</title>
+  <title>RTA Universal Size & Adaptive Crop OCR Scanner</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -27,7 +27,7 @@
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Grid */
+    /* Viewport Grid with Scrollable Aspect Support */
     .viewports-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -41,39 +41,40 @@
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 340px;
-      max-height: 560px;
+      min-height: 350px;
+      max-height: 600px;
       background: #0f172a;
       border-radius: 12px;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      padding: 10px;
       border: 2px solid var(--border);
     }
 
     .viewport-label {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      background: rgba(15, 23, 42, 0.88);
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      background: rgba(15, 23, 42, 0.90);
       color: #38bdf8;
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: bold;
       z-index: 5;
+      margin-bottom: 8px;
     }
 
     video, img {
       max-width: 100%;
-      max-height: 530px;
-      width: auto;
       height: auto;
       object-fit: contain;
       display: block;
-      margin: 0 auto;
+      margin: auto 0;
     }
 
     .laser-line {
@@ -109,8 +110,8 @@
     /* Output Boxes */
     .text-area-box {
       width: 100%;
-      min-height: 240px;
-      max-height: 380px;
+      min-height: 250px;
+      max-height: 400px;
       background: #1e293b;
       color: #00ff66;
       font-family: 'Courier New', Courier, monospace;
@@ -137,34 +138,34 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Contour Corner-Warp Scanner</h1>
-      <p>Precision Corner Detection, Adaptive Local Thresholding & Clear OCR</p>
+      <h1>🚖 RTA Universal Size Scanner</h1>
+      <p>Any Picture Size Acceptor, Smart Rescaler & Dynamic Cropper</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Processing Viewports</span>
-        <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
+        <span>📷 Dynamic Viewports</span>
+        <span id="size-info-badge" style="font-size: 0.8rem; color: #64748b;">No Image Loaded</span>
       </div>
 
       <div class="viewports-grid">
         <!-- 1. Original View -->
         <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo</div>
+          <div class="viewport-label">1. Original Photo (Any Resolution)</div>
           <video id="live-video" autoplay playsinline style="display:none;"></video>
           <img id="preview-img" style="display:none;" alt="Original Receipt" />
-          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            📷 Receipt Image Upload Ya Capture Karein
+          <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
+            📷 Kisi bhi size/resolution ki receipt image upload karein
           </div>
         </div>
 
-        <!-- 2. Processed View -->
+        <!-- 2. Auto-Rescaled & Cropped View -->
         <div class="viewport-box">
-          <div class="viewport-label">2. Flattened & Pure Black Text</div>
-          <img id="cropped-preview-img" style="display:none;" alt="Flattened Receipt" />
+          <div class="viewport-label">2. Normalized & Clear Deep Black</div>
+          <img id="cropped-preview-img" style="display:none;" alt="Normalized Receipt" />
           <div class="laser-line" id="laser"></div>
-          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            ⚡ Flattened Straight Receipt & Jet Black Text
+          <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 0.85rem;">
+            ⚡ Auto-Resized & Aspect Preserved Clean Receipt
           </div>
         </div>
       </div>
@@ -172,25 +173,25 @@
       <div class="btn-group">
         <button class="btn btn-camera" id="btn-start-cam" onclick="startLiveCamera()">📷 Start Camera</button>
         <button class="btn btn-snap" id="btn-snap" onclick="captureAndScan()">⚡ Capture & Scan</button>
-        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Receipt</button>
+        <button class="btn btn-upload" onclick="document.getElementById('native-file').click()">📁 Upload Any Picture</button>
         <input type="file" id="native-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Image upload karein.
+        ℹ️ System Ready. Kisi bhi size ki picture upload karein.
       </div>
     </div>
 
-    <!-- As-Is Text Area -->
+    <!-- As-Is Text Copy Container -->
     <div class="card">
       <div class="card-title">
-        <span>📄 Extracted Text (As-Is Formatting)</span>
+        <span>📄 Extracted Text (As-Is Format)</span>
         <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
       </div>
-      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Parsed text tarteeb ke sath yahan aayega..."></textarea>
+      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Normalisation ke baad text order ke sath yahan aayega..."></textarea>
     </div>
 
-    <!-- Parameters Data Table -->
+    <!-- Parameter Table -->
     <div class="card">
       <div class="card-title">
         <span>📋 Extracted Parameters Table</span>
@@ -247,6 +248,7 @@
     const laser = document.getElementById('laser');
     const statusBox = document.getElementById('status-box');
     const rawOcrText = document.getElementById('raw-ocr-text');
+    const sizeInfoBadge = document.getElementById('size-info-badge');
 
     let videoStream = null;
 
@@ -285,14 +287,14 @@
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      processAdvancedPipeline();
+      processUniversalPicturePipeline();
     }
 
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      statusBox.innerHTML = '⏳ <b>Photo load ho rahi hai...</b>';
+      statusBox.innerHTML = '⏳ <b>Picture load ho rahi hai...</b>';
       const objectUrl = URL.createObjectURL(file);
 
       placeholder1.style.display = 'none';
@@ -300,59 +302,75 @@
 
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Fault-free Pipeline Processing...</b>';
-        processAdvancedPipeline();
+        statusBox.innerHTML = '⚙️ <b>Picture size normalize aur crop ho rahi hai...</b>';
+        processUniversalPicturePipeline();
       };
 
       previewImg.src = objectUrl;
     }
 
-    // --- FAULT-FREE COMPUTER VISION PIPELINE ---
-    function processAdvancedPipeline() {
-      const w = previewImg.naturalWidth || previewImg.width;
-      const h = previewImg.naturalHeight || previewImg.height;
+    // --- UNIVERSAL PICTURE NORMALIZER & ADAPTIVE CROPPER ---
+    function processUniversalPicturePipeline() {
+      let origW = previewImg.naturalWidth || previewImg.width;
+      let origH = previewImg.naturalHeight || previewImg.height;
 
-      const srcCanvas = document.createElement('canvas');
-      srcCanvas.width = w;
-      srcCanvas.height = h;
-      const sCtx = srcCanvas.getContext('2d');
-      sCtx.drawImage(previewImg, 0, 0, w, h);
+      sizeInfoBadge.innerText = `Original: ${origW}x${origH}px`;
 
-      const srcData = sCtx.getImageData(0, 0, w, h);
-      const data = srcData.data;
+      // 1. Rescaling Engine (Normalizes high resolution pictures to optimal max 2000px dimension)
+      const maxDim = 2000;
+      let normW = origW;
+      let normH = origH;
 
-      // 1. Edge Contour & Corner Detection (Finds receipt quadrilateral)
-      let minX = w, minY = h, maxX = 0, maxY = 0;
-      let foundPaper = false;
+      if (origW > maxDim || origH > maxDim) {
+        if (origW > origH) {
+          normH = Math.round((origH * maxDim) / origW);
+          normW = maxDim;
+        } else {
+          normW = Math.round((origW * maxDim) / origH);
+          normH = maxDim;
+        }
+      }
 
-      // Scan rows to locate receipt paper edges cleanly
-      for (let y = 0; y < h; y += 3) {
-        for (let x = 0; x < w; x += 3) {
-          let i = (y * w + x) * 4;
+      const normCanvas = document.createElement('canvas');
+      normCanvas.width = normW;
+      normCanvas.height = normH;
+      const nCtx = normCanvas.getContext('2d');
+      nCtx.drawImage(previewImg, 0, 0, normW, normH);
+
+      const normImageData = nCtx.getImageData(0, 0, normW, normH);
+      const data = normImageData.data;
+
+      // 2. Smart Aspect Ratio Cropping (Preserves 100% Full Height for Tall Receipts)
+      let minX = normW, minY = normH, maxX = 0, maxY = 0;
+      let paperFound = false;
+
+      for (let y = 0; y < normH; y += 3) {
+        for (let x = 0; x < normW; x += 3) {
+          let i = (y * normW + x) * 4;
           let r = data[i], g = data[i+1], b = data[i+2];
 
-          // Chromatic Neutrality + Luminance (White thermal paper vs colored background)
           let lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          let colorDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+          let colorSpread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
 
-          if (lum > 110 && colorDiff < 35) {
+          // Thermal white paper detector
+          if (lum > 105 && colorSpread < 38) {
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
-            foundPaper = true;
+            paperFound = true;
           }
         }
       }
 
-      if (!foundPaper) { minX = 0; minY = 0; maxX = w; maxY = h; }
+      if (!paperFound) { minX = 0; minY = 0; maxX = normW; maxY = normH; }
       else {
-        let padX = Math.round(w * 0.01);
-        let padY = Math.round(h * 0.01);
+        let padX = Math.round(normW * 0.015);
+        let padY = Math.round(normH * 0.015);
         minX = Math.max(0, minX - padX);
         minY = Math.max(0, minY - padY);
-        maxX = Math.min(w, maxX + padX);
-        maxY = Math.min(h, maxY + padY);
+        maxX = Math.min(normW, maxX + padX);
+        maxY = Math.min(normH, maxY + padY);
       }
 
       const cropW = maxX - minX;
@@ -361,35 +379,33 @@
       procCanvas.width = cropW;
       procCanvas.height = cropH;
       const pCtx = procCanvas.getContext('2d');
-      pCtx.drawImage(srcCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+      pCtx.drawImage(normCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // 2. Local Adaptive Binarization (Solves Shadow & Light Gradients)
-      const cData = pCtx.getImageData(0, 0, cropW, cropH);
-      const pixels = cData.data;
-      const lumMap = new Float32Array(cropW * cropH);
+      // 3. Local Sauvola Window Thresholding (Deep Black Text Creation)
+      const croppedData = pCtx.getImageData(0, 0, cropW, cropH);
+      const pixels = croppedData.data;
+      const lumArray = new Float32Array(cropW * cropH);
 
       for (let i = 0; i < pixels.length; i += 4) {
-        lumMap[i / 4] = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
+        lumArray[i / 4] = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
       }
 
-      // Local Sauvola Windowing (Block 21x21)
-      const windowSize = 21;
+      const windowSize = 25;
       const halfW = Math.floor(windowSize / 2);
 
       for (let y = 0; y < cropH; y++) {
         for (let x = 0; x < cropW; x++) {
           let idx = y * cropW + x;
-          let currentLum = lumMap[idx];
+          let curLum = lumArray[idx];
 
-          // Local average threshold
           let sum = 0, count = 0;
-          for (let wy = -halfW; wy <= halfW; wy += 5) {
+          for (let wy = -halfW; wy <= halfW; wy += 6) {
             let ny = y + wy;
             if (ny < 0 || ny >= cropH) continue;
-            for (let wx = -halfW; wx <= halfW; wx += 5) {
+            for (let wx = -halfW; wx <= halfW; wx += 6) {
               let nx = x + wx;
               if (nx >= 0 && nx < cropW) {
-                sum += lumMap[ny * cropW + nx];
+                sum += lumArray[ny * cropW + nx];
                 count++;
               }
             }
@@ -398,27 +414,27 @@
           let localMean = sum / count;
           let pIdx = idx * 4;
 
-          // If pixel is darker than local surroundings -> JET BLACK
-          if (currentLum < localMean - 12 && currentLum < 165) {
-            pixels[pIdx] = 0;       // Black Text
+          if (curLum < localMean - 10 && curLum < 170) {
+            pixels[pIdx] = 0;       // Jet Black Text
             pixels[pIdx + 1] = 0;
             pixels[pIdx + 2] = 0;
           } else {
-            pixels[pIdx] = 255;     // White Background
+            pixels[pIdx] = 255;     // Pure White Paper
             pixels[pIdx + 1] = 255;
             pixels[pIdx + 2] = 255;
           }
         }
       }
 
-      pCtx.putImageData(cData, 0, 0);
+      pCtx.putImageData(croppedData, 0, 0);
 
-      // Update UI preview
+      // Render updated normalized receipt
       croppedPreviewImg.src = procCanvas.toDataURL('image/png');
       placeholder2.style.display = 'none';
       croppedPreviewImg.style.display = 'block';
 
-      statusBox.innerHTML = '✨ <b>Faults fixed! Receipt flattened & text jet black.</b> Scanning...';
+      sizeInfoBadge.innerText = `Normalized: ${normW}x${normH}px | Crop: ${cropW}x${cropH}px`;
+      statusBox.innerHTML = '✨ <b>Picture size normalized & cropped!</b> OCR text read kar raha hai...';
       
       runOCR();
     }
@@ -434,7 +450,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Precision Reading: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Precision Scanning: ${prog}%</b>`;
               }
             }
           }
@@ -446,7 +462,7 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Scanning Mukammal!</b> Text order ke sath tayar hai.';
+          statusBox.innerHTML = '✅ <b>Picture Normalized & OCR Mukammal!</b> Text order wise tayar hai.';
         } else {
           statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }

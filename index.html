@@ -1,84 +1,93 @@
-import re
-import io
-from flask import Flask, request, jsonify
-from google.cloud import vision
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RTA Slip AI Scanner</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f1f5f9; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    input[type="file"] { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px; border: 1px solid #cbd5e1; text-align: left; }
+    th { background: #0f172a; color: white; }
+    .val { font-weight: bold; color: #2563eb; }
+  </style>
+</head>
+<body>
 
-app = Flask(__name__)
+  <div class="card">
+    <h2>🚖 RTA Receipt 100% AI Scanner</h2>
+    <p>Upload receipt image (faded thermal slips support included)</p>
+    <br>
+    <input type="file" id="fileInput" accept="image/*" onchange="processReceipt()">
+    <div id="status"></div>
 
-# Google Vision Client Setup
-client = vision.ImageAnnotatorClient()
+    <table id="resultTable" style="display:none;">
+      <thead>
+        <tr><th>Parameter</th><th>Extracted Value</th></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
-def parse_rta_receipt(text):
-    """
-    RTA Slip ke tamam fields ko 100% accuracy ke sath extract karne ka parser
-    """
-    data = {
-        "credit_cards": None,
-        "in_app": None,
-        "cash": None,
-        "tips": None,
-        "total_tollways": None,
-        "total_amount": None,
-        "shift_discount": None,
-        "shift_trips": None,
-        "bookings": None,
-        "kilometers_hired": None,
-        "careem_discount": None,
-        "paid_in_careem": None
+  <script>
+    async function processReceipt() {
+      const fileInput = document.getElementById('fileInput');
+      const status = document.getElementById('status');
+      const table = document.getElementById('resultTable');
+      const tableBody = document.getElementById('tableBody');
+
+      if (!fileInput.files[0]) return;
+
+      status.innerText = "⚡ Scanning receipt with Vision AI...";
+      table.style.display = "none";
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64Data = e.target.result.split(',')[1];
+
+        // API Request Payload for Vision Prompting
+        const prompt = `Extract all financial values from this RTA taxi receipt in JSON format with these exact keys:
+        credit_cards, in_app, cash, tips, total_tollways, total_amount, shift_discount, shift_trips, bookings, kilometers_hired, careem_discount, paid_in_careem.
+        If a field is missing, set its value to null. Return ONLY raw JSON without markdown formatting.`;
+
+        // Replace with your API Key or backend proxy
+        const API_KEY = "YOUR_GEMINI_API_KEY";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                ]
+              }]
+            })
+          });
+
+          const jsonRes = await res.json();
+          let rawText = jsonRes.candidates[0].content.parts[0].text;
+          rawText = rawText.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(rawText);
+
+          tableBody.innerHTML = "";
+          for (let [key, val] of Object.entries(parsed)) {
+            tableBody.innerHTML += `<tr><td><strong>${key.replace(/_/g, ' ').toUpperCase()}</strong></td><td class="val">${val !== null ? val : 'Not Present'}</td></tr>`;
+          }
+
+          status.innerText = "✅ Scanning Complete!";
+          table.style.display = "table";
+
+        } catch (err) {
+          status.innerText = "❌ Error: " + err.message;
+        }
+      };
+      reader.readAsDataURL(fileInput.files[0]);
     }
-
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-
-    # Patterns for key fields
-    patterns = {
-        "credit_cards": [r'credit\s*cards?', r'cred'],
-        "in_app": [r'in-?app', r'dtc-?app'],
-        "cash": [r'cash'],
-        "tips": [r'tips?'],
-        "total_tollways": [r'total\s*tollways?', r'tollways?'],
-        "total_amount": [r'total\s*amount', r'shift\s*total', r'net\s*amount'],
-        "shift_discount": [r'shift\s*discount'],
-        "shift_trips": [r'shift\s*trips'],
-        "bookings": [r'bookings?'],
-        "kilometers_hired": [r'kilometers?\s*hired', r'km\s*hired'],
-        "careem_discount": [r'careem\s*discount'],
-        "paid_in_careem": [r'paid\s*in\s*careem']
-    }
-
-    for key, regex_list in patterns.items():
-        for i, line in enumerate(lines):
-            matched = any(re.search(p, line, re.IGNORECASE) for p in regex_list)
-            if matched:
-                # Same line ya agli line se number extract karna
-                combined = line + " " + (lines[i+1] if i + 1 < len(lines) else "")
-                # Number with decimal finder
-                amounts = re.findall(r'\b\d+(?:[\.\,]\d{1,2})?\b', combined)
-                if amounts:
-                    data[key] = amounts[-1].replace(',', '.')
-                    break
-
-    return data
-
-@app.route('/scan-receipt', methods=['POST'])
-def scan_receipt():
-    if 'file' not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
-        
-    file = request.files['file']
-    content = file.read()
-    image = vision.Image(content=content)
-
-    # Document text detection handles thermal dot-matrix text accurately
-    response = client.document_text_detection(image=image)
-    full_text = response.full_text_annotation.text if response.full_text_annotation else ""
-
-    parsed_data = parse_rta_receipt(full_text)
-
-    return jsonify({
-        "status": "success",
-        "raw_text": full_text,
-        "extracted_data": parsed_data
-    })
-
-if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+  </script>
+</body>
+</html>

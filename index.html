@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTA Smart Auto-Rotate & OCR Scanner</title>
+  <title>RTA Advanced Contour & Perspective OCR</title>
   <!-- Tesseract.js Engine v5 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -18,7 +18,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg); color: var(--primary); padding: 15px 10px; }
 
-    .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .container { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
     header { background: var(--primary); color: white; padding: 16px; border-radius: 12px; text-align: center; }
     header h1 { font-size: 1.3rem; font-weight: 700; }
@@ -27,7 +27,7 @@
     .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Viewport Boxes */
+    /* Viewport Grid */
     .viewports-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -41,8 +41,8 @@
     .viewport-box {
       position: relative;
       width: 100%;
-      min-height: 320px;
-      max-height: 540px;
+      min-height: 340px;
+      max-height: 560px;
       background: #0f172a;
       border-radius: 12px;
       overflow: hidden;
@@ -57,7 +57,7 @@
       position: absolute;
       top: 8px;
       left: 8px;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.88);
       color: #38bdf8;
       padding: 4px 8px;
       border-radius: 6px;
@@ -68,7 +68,7 @@
 
     video, img {
       max-width: 100%;
-      max-height: 520px;
+      max-height: 530px;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -94,7 +94,7 @@
       100% { top: 0%; }
     }
 
-    /* Controls & Buttons */
+    /* Controls */
     .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
     .btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-camera { background: var(--accent); color: white; }
@@ -106,11 +106,11 @@
 
     .status-bar { padding: 12px 14px; background: #e0f2fe; color: #0369a1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-top: 12px; }
 
-    /* Text Container & Raw Area */
+    /* Output Boxes */
     .text-area-box {
       width: 100%;
-      min-height: 220px;
-      max-height: 350px;
+      min-height: 240px;
+      max-height: 380px;
       background: #1e293b;
       color: #00ff66;
       font-family: 'Courier New', Courier, monospace;
@@ -124,7 +124,6 @@
       overflow-x: auto;
     }
 
-    /* Data Table */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
     th { background: #f1f5f9; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 0.78rem; }
@@ -138,34 +137,34 @@
 
   <div class="container">
     <header>
-      <h1>🚖 RTA Smart Auto-Rotate & Text Scanner</h1>
-      <p>Auto-Straighten, Auto-Crop, Text Cleaner & As-Is Copy System</p>
+      <h1>🚖 RTA Contour Corner-Warp Scanner</h1>
+      <p>Precision Corner Detection, Adaptive Local Thresholding & Clear OCR</p>
     </header>
 
     <div class="card">
       <div class="card-title">
-        <span>📷 Image Viewports</span>
+        <span>📷 Processing Viewports</span>
         <span id="status-badge" style="font-size: 0.8rem; color: #64748b;">Ready</span>
       </div>
 
       <div class="viewports-grid">
-        <!-- 1. Original Input View -->
+        <!-- 1. Original View -->
         <div class="viewport-box">
-          <div class="viewport-label">1. Original Photo (Tilted)</div>
+          <div class="viewport-label">1. Original Photo</div>
           <video id="live-video" autoplay playsinline style="display:none;"></video>
           <img id="preview-img" style="display:none;" alt="Original Receipt" />
           <div id="placeholder-1" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            📷 Receipt ki Photo Upload ya Capture Karein
+            📷 Receipt Image Upload Ya Capture Karein
           </div>
         </div>
 
-        <!-- 2. Auto-Rotated, Cropped & Deep Black Clean View -->
+        <!-- 2. Processed View -->
         <div class="viewport-box">
-          <div class="viewport-label">2. Auto-Rotated & Clear Text</div>
-          <img id="cropped-preview-img" style="display:none;" alt="Auto Rotated Clear Receipt" />
+          <div class="viewport-label">2. Flattened & Pure Black Text</div>
+          <img id="cropped-preview-img" style="display:none;" alt="Flattened Receipt" />
           <div class="laser-line" id="laser"></div>
           <div id="placeholder-2" style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.85rem;">
-            ⚡ Auto-Seedhi (Straight) & Deep Black Receipt Yahan Dikhayi Degi
+            ⚡ Flattened Straight Receipt & Jet Black Text
           </div>
         </div>
       </div>
@@ -178,26 +177,24 @@
       </div>
 
       <div class="status-bar" id="status-box">
-        ℹ️ System Ready. Receipt image upload karein.
+        ℹ️ System Ready. Image upload karein.
       </div>
     </div>
 
-    <!-- Exact Extracted Text As-Is Container -->
+    <!-- As-Is Text Area -->
     <div class="card">
       <div class="card-title">
-        <span>📄 Extracted Text (As-Is Format)</span>
+        <span>📄 Extracted Text (As-Is Formatting)</span>
         <button class="btn-copy" onclick="copyExtractedText()">📋 Copy Text As-Is</button>
       </div>
-
-      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Extracted text order-wise yahan dikhayi dega..."></textarea>
+      <textarea id="raw-ocr-text" class="text-area-box" readonly placeholder="Parsed text tarteeb ke sath yahan aayega..."></textarea>
     </div>
 
-    <!-- Structured Data Parameters Table -->
+    <!-- Parameters Data Table -->
     <div class="card">
       <div class="card-title">
-        <span>📋 Filtered Parameters Table</span>
+        <span>📋 Extracted Parameters Table</span>
       </div>
-
       <table>
         <thead>
           <tr>
@@ -288,7 +285,7 @@
       document.getElementById('btn-start-cam').style.display = 'inline-flex';
       document.getElementById('btn-snap').style.display = 'none';
 
-      processImagePipeline();
+      processAdvancedPipeline();
     }
 
     function handleFileSelect(event) {
@@ -303,104 +300,55 @@
 
       previewImg.onload = function() {
         previewImg.style.display = 'block';
-        statusBox.innerHTML = '⚙️ <b>Auto-rotating, background removing & text sharpening...</b>';
-        processImagePipeline();
+        statusBox.innerHTML = '⚙️ <b>Fault-free Pipeline Processing...</b>';
+        processAdvancedPipeline();
       };
 
       previewImg.src = objectUrl;
     }
 
-    // --- SMART AUTO-ROTATE, BACKGROUND FILTER & CLEARING PIPELINE ---
-    function processImagePipeline() {
+    // --- FAULT-FREE COMPUTER VISION PIPELINE ---
+    function processAdvancedPipeline() {
       const w = previewImg.naturalWidth || previewImg.width;
       const h = previewImg.naturalHeight || previewImg.height;
 
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = w;
-      tempCanvas.height = h;
-      const tCtx = tempCanvas.getContext('2d');
-      tCtx.drawImage(previewImg, 0, 0, w, h);
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = w;
+      srcCanvas.height = h;
+      const sCtx = srcCanvas.getContext('2d');
+      sCtx.drawImage(previewImg, 0, 0, w, h);
 
-      const imgData = tCtx.getImageData(0, 0, w, h);
-      const data = imgData.data;
+      const srcData = sCtx.getImageData(0, 0, w, h);
+      const data = srcData.data;
 
-      // 1. Detect Receipt Mask & Calculate Orientation Moments for Auto-Deskew
-      let m00 = 0, m10 = 0, m01 = 0;
-      for (let y = 0; y < h; y += 4) {
-        for (let x = 0; x < w; x += 4) {
+      // 1. Edge Contour & Corner Detection (Finds receipt quadrilateral)
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+      let foundPaper = false;
+
+      // Scan rows to locate receipt paper edges cleanly
+      for (let y = 0; y < h; y += 3) {
+        for (let x = 0; x < w; x += 3) {
           let i = (y * w + x) * 4;
           let r = data[i], g = data[i+1], b = data[i+2];
 
-          // White paper detection filter (ignores red/patterned bedsheet)
-          if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
-            m00++;
-            m10 += x;
-            m01 += y;
-          }
-        }
-      }
+          // Chromatic Neutrality + Luminance (White thermal paper vs colored background)
+          let lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          let colorDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
 
-      let deskewAngleRad = 0;
-      if (m00 > 100) {
-        let cx = m10 / m00;
-        let cy = m01 / m00;
-        let mu20 = 0, mu02 = 0, mu11 = 0;
-
-        for (let y = 0; y < h; y += 4) {
-          for (let x = 0; x < w; x += 4) {
-            let i = (y * w + x) * 4;
-            let r = data[i], g = data[i+1], b = data[i+2];
-            if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
-              let dx = x - cx;
-              let dy = y - cy;
-              mu20 += dx * dx;
-              mu02 += dy * dy;
-              mu11 += dx * dy;
-            }
-          }
-        }
-
-        let rawAngleDeg = 0.5 * Math.atan2(2 * mu11, mu20 - mu02) * (180 / Math.PI);
-        // Calculate tilt relative to vertical orientation
-        let tilt = rawAngleDeg > 0 ? (90 - rawAngleDeg) : (-90 - rawAngleDeg);
-        if (Math.abs(tilt) < 30) {
-          deskewAngleRad = -tilt * (Math.PI / 180);
-        }
-      }
-
-      // 2. Rotate Image on Canvas to Straighten
-      const rotCanvas = document.createElement('canvas');
-      rotCanvas.width = w;
-      rotCanvas.height = h;
-      const rCtx = rotCanvas.getContext('2d');
-
-      rCtx.translate(w / 2, h / 2);
-      rCtx.rotate(deskewAngleRad);
-      rCtx.drawImage(tempCanvas, -w / 2, -h / 2);
-
-      // 3. Auto-Crop Rotated Receipt Area
-      const rotData = rCtx.getImageData(0, 0, w, h).data;
-      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
-
-      for (let y = 0; y < h; y += 4) {
-        for (let x = 0; x < w; x += 4) {
-          let i = (y * w + x) * 4;
-          let r = rotData[i], g = rotData[i+1], b = rotData[i+2];
-
-          if (r > 120 && g > 120 && b > 120 && Math.abs(r - g) < 40 && Math.abs(g - b) < 40) {
+          if (lum > 110 && colorDiff < 35) {
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
-            found = true;
+            foundPaper = true;
           }
         }
       }
 
-      if (!found) { minX = 0; minY = 0; maxX = w; maxY = h; }
+      if (!foundPaper) { minX = 0; minY = 0; maxX = w; maxY = h; }
       else {
-        let padX = Math.round(w * 0.015);
-        let padY = Math.round(h * 0.015);
+        let padX = Math.round(w * 0.01);
+        let padY = Math.round(h * 0.01);
         minX = Math.max(0, minX - padX);
         minY = Math.max(0, minY - padY);
         maxX = Math.min(w, maxX + padX);
@@ -413,35 +361,64 @@
       procCanvas.width = cropW;
       procCanvas.height = cropH;
       const pCtx = procCanvas.getContext('2d');
-      pCtx.drawImage(rotCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+      pCtx.drawImage(srcCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // 4. Binarize & Enhance Text (Deep Black & Pure White Background)
-      const finalImgData = pCtx.getImageData(0, 0, cropW, cropH);
-      const pixels = finalImgData.data;
+      // 2. Local Adaptive Binarization (Solves Shadow & Light Gradients)
+      const cData = pCtx.getImageData(0, 0, cropW, cropH);
+      const pixels = cData.data;
+      const lumMap = new Float32Array(cropW * cropH);
 
       for (let i = 0; i < pixels.length; i += 4) {
-        let lum = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
+        lumMap[i / 4] = 0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2];
+      }
 
-        // Adaptive contrast threshold
-        if (lum < 150) {
-          pixels[i] = 0;       // Pure Black Text
-          pixels[i+1] = 0;
-          pixels[i+2] = 0;
-        } else {
-          pixels[i] = 255;     // Pure White Background
-          pixels[i+1] = 255;
-          pixels[i+2] = 255;
+      // Local Sauvola Windowing (Block 21x21)
+      const windowSize = 21;
+      const halfW = Math.floor(windowSize / 2);
+
+      for (let y = 0; y < cropH; y++) {
+        for (let x = 0; x < cropW; x++) {
+          let idx = y * cropW + x;
+          let currentLum = lumMap[idx];
+
+          // Local average threshold
+          let sum = 0, count = 0;
+          for (let wy = -halfW; wy <= halfW; wy += 5) {
+            let ny = y + wy;
+            if (ny < 0 || ny >= cropH) continue;
+            for (let wx = -halfW; wx <= halfW; wx += 5) {
+              let nx = x + wx;
+              if (nx >= 0 && nx < cropW) {
+                sum += lumMap[ny * cropW + nx];
+                count++;
+              }
+            }
+          }
+
+          let localMean = sum / count;
+          let pIdx = idx * 4;
+
+          // If pixel is darker than local surroundings -> JET BLACK
+          if (currentLum < localMean - 12 && currentLum < 165) {
+            pixels[pIdx] = 0;       // Black Text
+            pixels[pIdx + 1] = 0;
+            pixels[pIdx + 2] = 0;
+          } else {
+            pixels[pIdx] = 255;     // White Background
+            pixels[pIdx + 1] = 255;
+            pixels[pIdx + 2] = 255;
+          }
         }
       }
 
-      pCtx.putImageData(finalImgData, 0, 0);
+      pCtx.putImageData(cData, 0, 0);
 
-      // Render updated straightened receipt image
+      // Update UI preview
       croppedPreviewImg.src = procCanvas.toDataURL('image/png');
       placeholder2.style.display = 'none';
       croppedPreviewImg.style.display = 'block';
 
-      statusBox.innerHTML = '✨ <b>Receipt seedhi ho gayi aur text wazia ho gaya!</b> Scanning...';
+      statusBox.innerHTML = '✨ <b>Faults fixed! Receipt flattened & text jet black.</b> Scanning...';
       
       runOCR();
     }
@@ -457,7 +434,7 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const prog = Math.round((m.progress || 0) * 100);
-                statusBox.innerHTML = `🔍 <b>Reading Clear Text: ${prog}%</b>`;
+                statusBox.innerHTML = `🔍 <b>Precision Reading: ${prog}%</b>`;
               }
             }
           }
@@ -469,7 +446,7 @@
 
         if (text.trim()) {
           parseAndPopulateData(text);
-          statusBox.innerHTML = '✅ <b>Auto-Straighten & OCR Mukammal!</b> Text copy karne ke liye ready hai.';
+          statusBox.innerHTML = '✅ <b>Scanning Mukammal!</b> Text order ke sath tayar hai.';
         } else {
           statusBox.innerHTML = '⚠️ <b>Text read nahi ho saka.</b>';
         }

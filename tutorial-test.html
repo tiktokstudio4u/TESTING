@@ -3,9 +3,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Driver Tutorial</title>
+  <title>Driver Dashboard Tutorial</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -18,12 +18,10 @@
     }
 
     .dashboard {
-      padding: 24px;
       max-width: 1100px;
       margin: auto;
+      padding: 24px;
     }
-
-    h1 { font-size: 26px; }
 
     .cards {
       display: grid;
@@ -39,13 +37,11 @@
       box-shadow: 0 3px 12px #0000000c;
     }
 
-    .card h3 { margin-top: 0; }
-
     .tutorial-overlay {
       position: fixed;
       inset: 0;
-      background: #101827eF;
       z-index: 9999;
+      background: rgba(16, 24, 39, .94);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -57,33 +53,33 @@
       background: white;
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 10px 40px #0005;
     }
 
     .topbar {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
       gap: 12px;
       padding: 14px 18px;
       border-bottom: 1px solid #e5e7eb;
-      flex-wrap: wrap;
     }
 
     .topbar h2 {
-      font-size: 19px;
       margin: 0;
+      font-size: 19px;
     }
 
-    .language-buttons {
+    .buttons {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
     button {
       border: 0;
       border-radius: 7px;
-      padding: 10px 15px;
+      padding: 10px 14px;
       font-size: 14px;
       font-weight: bold;
       cursor: pointer;
@@ -105,13 +101,26 @@
     }
 
     .video-area {
-      position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
     }
 
     #player {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Keep the video filling the screen when the container is fullscreen. */
+    .video-area:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      background: #000;
+    }
+
+    .video-area:fullscreen #player {
       width: 100%;
       height: 100%;
     }
@@ -132,7 +141,7 @@
       height: 100%;
       width: 0%;
       background: #1769e0;
-      transition: width .3s;
+      transition: width .2s;
     }
 
     .small-text {
@@ -142,22 +151,21 @@
     }
 
     #resumeBtn {
+      display: none;
+      margin-top: 20px;
       background: #1769e0;
       color: white;
-      display: none;
     }
 
     @media (max-width: 500px) {
       .dashboard { padding: 16px; }
       .topbar { align-items: flex-start; }
       .topbar h2 { width: 100%; }
-      .language-buttons { flex-wrap: wrap; }
     }
   </style>
 </head>
 
 <body>
-
   <main class="dashboard">
     <h1>Driver Dashboard</h1>
     <p>Manage your earnings, targets, invoices and reports.</p>
@@ -181,17 +189,15 @@
       </div>
     </div>
 
-    <p style="margin-top:24px">
-      <button id="resumeBtn">Continue Tutorial</button>
-    </p>
+    <button id="resumeBtn">Continue Tutorial</button>
   </main>
 
   <div class="tutorial-overlay" id="tutorialOverlay">
-    <section class="tutorial-box">
+    <section class="tutorial-box" id="tutorialBox">
       <header class="topbar">
         <h2 id="tutorialTitle">Driver Software Tutorial</h2>
 
-        <div class="language-buttons">
+        <div class="buttons">
           <button class="lang-btn active" id="urduBtn">اردو</button>
           <button class="lang-btn" id="englishBtn">English</button>
           <button class="close-btn" id="closeBtn">Close</button>
@@ -209,22 +215,23 @@
         </div>
         <div class="small-text" id="statusText">
           Your progress is saved automatically on this browser.
+          Use YouTube's player controls for fullscreen.
         </div>
       </div>
     </section>
   </div>
 
   <script>
-    // Both buttons use the same video for testing.
-    // Replace ENGLISH_VIDEO_ID later when the English tutorial is ready.
+    // Testing: both language buttons use the same video.
+    // Replace ENGLISH_VIDEO_ID when the English tutorial is ready.
     const URDU_VIDEO_ID = "xFGi__79snw";
     const ENGLISH_VIDEO_ID = "xFGi__79snw";
 
     let currentLanguage = "urdu";
-    let player;
-    let saveTimer;
-    let progressTimer;
-    let isReady = false;
+    let player = null;
+    let playerReady = false;
+    let progressTimer = null;
+    let saveTimer = null;
     let switchingLanguage = false;
 
     const overlay = document.getElementById("tutorialOverlay");
@@ -234,7 +241,7 @@
     const statusText = document.getElementById("statusText");
     const tutorialTitle = document.getElementById("tutorialTitle");
 
-    function storageKey(language) {
+    function positionKey(language) {
       return "driver_tutorial_" + language + "_position";
     }
 
@@ -242,16 +249,21 @@
       return "driver_tutorial_" + language + "_complete";
     }
 
-    function videoIdFor(language) {
+    function getVideoId(language) {
       return language === "english"
         ? ENGLISH_VIDEO_ID
         : URDU_VIDEO_ID;
     }
 
-    function updateLanguageButtons() {
+    function getSavedPosition(language) {
+      return Number(localStorage.getItem(positionKey(language)) || 0);
+    }
+
+    function updateLanguageUI() {
       document.getElementById("urduBtn").classList.toggle(
         "active", currentLanguage === "urdu"
       );
+
       document.getElementById("englishBtn").classList.toggle(
         "active", currentLanguage === "english"
       );
@@ -262,60 +274,75 @@
     }
 
     function savePosition() {
-      if (!isReady || !player || switchingLanguage) return;
+      if (!playerReady || !player || switchingLanguage) return;
 
       try {
-        const time = player.getCurrentTime();
-        if (Number.isFinite(time) && time >= 0) {
-          localStorage.setItem(storageKey(currentLanguage), time);
+        const currentTime = player.getCurrentTime();
+        if (Number.isFinite(currentTime) && currentTime >= 0) {
+          localStorage.setItem(
+            positionKey(currentLanguage),
+            String(currentTime)
+          );
         }
-      } catch (e) {}
+      } catch (error) {
+        // Storage may be unavailable in some browser contexts.
+      }
     }
 
     function updateProgress() {
-      if (!isReady || !player) return;
+      if (!playerReady || !player) return;
 
       try {
         const duration = player.getDuration();
-        const current = player.getCurrentTime();
+        const currentTime = player.getCurrentTime();
 
         if (duration > 0) {
-          const percent = Math.min(100, (current / duration) * 100);
+          const percent = Math.min(
+            100, Math.max(0, currentTime / duration * 100)
+          );
+
           progressFill.style.width = percent + "%";
           progressText.textContent =
             "Tutorial progress: " + Math.floor(percent) + "%";
         }
-      } catch (e) {}
+      } catch (error) {}
     }
 
     function switchLanguage(language) {
-      if (language === currentLanguage || !isReady) return;
+      if (!playerReady || language === currentLanguage) return;
 
-      switchingLanguage = true;
+      const oldLanguage = currentLanguage;
       let currentTime = 0;
 
       try {
         currentTime = player.getCurrentTime() || 0;
-        localStorage.setItem(storageKey(currentLanguage), currentTime);
-      } catch (e) {}
+        localStorage.setItem(positionKey(oldLanguage), String(currentTime));
+      } catch (error) {}
 
       currentLanguage = language;
-      updateLanguageButtons();
+      updateLanguageUI();
 
-      // Use the same playback position when changing languages.
-      // This works best when both videos have similar durations.
+      switchingLanguage = true;
+
       try {
         player.loadVideoById({
-          videoId: videoIdFor(currentLanguage),
+          videoId: getVideoId(language),
           startSeconds: currentTime
         });
+
         player.mute();
-      } catch (e) {}
+        statusText.textContent =
+          "Switching tutorial language and restoring playback position...";
+      } catch (error) {
+        statusText.textContent = "Unable to switch tutorial language.";
+      }
 
       setTimeout(() => {
         switchingLanguage = false;
         updateProgress();
-      }, 1200);
+        statusText.textContent =
+          "Your progress is saved automatically on this browser.";
+      }, 1500);
     }
 
     document.getElementById("urduBtn").addEventListener("click", () => {
@@ -328,7 +355,11 @@
 
     document.getElementById("closeBtn").addEventListener("click", () => {
       savePosition();
-      if (player && isReady) player.pauseVideo();
+
+      if (playerReady && player) {
+        player.pauseVideo();
+      }
+
       overlay.style.display = "none";
       resumeBtn.style.display = "inline-block";
     });
@@ -336,29 +367,16 @@
     resumeBtn.addEventListener("click", () => {
       overlay.style.display = "flex";
       resumeBtn.style.display = "none";
-      if (player && isReady) player.playVideo();
-    });
 
-    // Double-click the video area to toggle fullscreen.
-    const videoArea = document.getElementById("videoArea");
-
-    videoArea.addEventListener("dblclick", async () => {
-      try {
-        if (!document.fullscreenElement) {
-          await videoArea.requestFullscreen();
-        } else {
-          await document.exitFullscreen();
-        }
-      } catch (e) {
-        statusText.textContent =
-          "Fullscreen is not supported in this browser.";
+      if (playerReady && player) {
+        player.playVideo();
       }
     });
 
-    // YouTube IFrame Player API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
+    // Load YouTube's official IFrame API.
+    const youtubeScript = document.createElement("script");
+    youtubeScript.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(youtubeScript);
 
     window.onYouTubeIframeAPIReady = function () {
       player = new YT.Player("player", {
@@ -375,21 +393,23 @@
         },
         events: {
           onReady: function (event) {
-            isReady = true;
+            playerReady = true;
 
-            const saved = Number(
-              localStorage.getItem(storageKey(currentLanguage)) || 0
-            );
+            const savedPosition = getSavedPosition(currentLanguage);
 
-            if (saved > 0) event.target.seekTo(saved, true);
+            if (savedPosition > 0) {
+              event.target.seekTo(savedPosition, true);
+            }
 
-            // Muted autoplay is more likely to work in browsers.
+            // Muted autoplay is more likely to be allowed by browsers.
             event.target.mute();
             event.target.playVideo();
 
             progressTimer = setInterval(updateProgress, 1000);
             saveTimer = setInterval(savePosition, 2000);
-            updateLanguageButtons();
+
+            updateLanguageUI();
+            updateProgress();
           },
 
           onStateChange: function (event) {
@@ -397,10 +417,12 @@
 
             if (event.data === YT.PlayerState.ENDED) {
               localStorage.setItem(completeKey(currentLanguage), "true");
-              localStorage.removeItem(storageKey(currentLanguage));
+              localStorage.removeItem(positionKey(currentLanguage));
+
               progressFill.style.width = "100%";
               progressText.textContent = "Tutorial progress: 100%";
               statusText.textContent = "Tutorial completed.";
+
               overlay.style.display = "none";
               resumeBtn.style.display = "none";
             } else if (event.data === YT.PlayerState.PLAYING) {
@@ -411,20 +433,22 @@
 
           onError: function () {
             statusText.textContent =
-              "Unable to load video. Please check the video settings.";
+              "Unable to load video. Check the video's embedding settings.";
           }
         }
       });
     };
 
-    // Demo only: browser-local completion state.
-    // Reopen the tutorial if neither language has been marked complete.
-    window.addEventListener("load", () => {
-      const urduDone = localStorage.getItem(completeKey("urdu")) === "true";
-      const englishDone =
+    // Demo behavior: hide the tutorial only after both demo languages
+    // have been marked complete. Each language keeps its own progress.
+    window.addEventListener("load", function () {
+      const urduCompleted =
+        localStorage.getItem(completeKey("urdu")) === "true";
+
+      const englishCompleted =
         localStorage.getItem(completeKey("english")) === "true";
 
-      if (urduDone && englishDone) {
+      if (urduCompleted && englishCompleted) {
         overlay.style.display = "none";
       }
     });

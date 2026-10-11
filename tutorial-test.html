@@ -1,296 +1,161 @@
 
 <!DOCTYPE html>
-<html lang="ur" dir="rtl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Taxi Driver Tutorial</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Taxi Driver Tutorial</title>
 
-  <style>
-    :root {
-      --green: #0d3b2a;
-      --green2: #176344;
-      --gold: #d6b36a;
-      --bg: #f3f6f4;
-      --text: #1d2b24;
-      --muted: #68776e;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Tahoma, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    header {
-      background: var(--green);
-      color: white;
-      padding: 18px 5%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    header strong { font-size: 19px; }
-    header small { display: block; margin-top: 5px; color: #dce9e1; }
-
-    main {
-      width: min(950px, 94%);
-      margin: 28px auto;
-    }
-
-    .welcome {
-      margin-bottom: 22px;
-    }
-
-    h1 { font-size: 25px; margin-bottom: 8px; }
-    p { line-height: 1.8; }
-
-    .muted { color: var(--muted); }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .card, .tutorial-status {
-      background: white;
-      border: 1px solid #e0e9e3;
-      border-radius: 15px;
-      padding: 20px;
-    }
-
-    .value {
-      font-size: 27px;
-      font-weight: bold;
-      color: var(--green);
-      margin-top: 9px;
-    }
-
-    .tutorial-status { margin-top: 18px; }
-
-    button {
-      border: 0;
-      border-radius: 9px;
-      padding: 12px 18px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .primary {
-      background: var(--green2);
-      color: white;
-    }
-
-    .secondary {
-      background: #eaf1ec;
-      color: var(--green);
-    }
-
-    button:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(5, 20, 12, .82);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      overflow-y: auto;
-    }
-
-    .modal {
-      width: min(760px, 100%);
-      background: white;
-      border-radius: 17px;
-      overflow: hidden;
-      box-shadow: 0 20px 65px #0004;
-    }
-
-    .modal-header {
-      padding: 19px 21px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      border-bottom: 1px solid #e6ece8;
-    }
-
-    .modal-header h2 {
-      margin: 0 0 7px;
-      font-size: 21px;
-    }
-
-    .close {
-      padding: 7px 12px;
-      background: #edf1ee;
-      color: #34473b;
-    }
-
-    .video-area {
-      background: #000;
-      padding: 12px;
-    }
-
-    .video-frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      overflow: hidden;
-      border-radius: 8px;
-    }
-
-    #player {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .details { padding: 18px 21px 21px; }
-
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
-      margin-bottom: 9px;
-    }
-
-    .track {
-      height: 9px;
-      background: #e8eee9;
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    #progress {
-      width: 0;
-      height: 100%;
-      background: var(--gold);
-      transition: width .25s;
-    }
-
-    .notice {
-      padding: 12px;
-      margin-top: 15px;
-      border-radius: 9px;
-      background: #f2f6f3;
-      color: #4f6255;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 15px;
-    }
-
-    .hidden { display: none !important; }
-
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 25px;
-    }
-
-    @media (max-width: 600px) {
-      .cards { grid-template-columns: 1fr; }
-      h1 { font-size: 22px; }
-      .modal-header { padding: 15px; }
-      .details { padding: 15px; }
-      .video-area { padding: 5px; }
-    }
-  </style>
+<style>
+:root {
+  --green:#0d3b2a;
+  --green2:#176344;
+  --gold:#d6b36a;
+  --bg:#f3f6f4;
+  --text:#1d2b24;
+  --muted:#68776e;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  background:var(--green);
+  color:white;
+  padding:18px 5%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+header strong{font-size:19px}
+header small{display:block;margin-top:5px;color:#dce9e1}
+main{width:min(950px,94%);margin:28px auto}
+h1{font-size:25px;margin-bottom:8px}
+.muted{color:var(--muted);line-height:1.7}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card,.status{
+  background:white;
+  border:1px solid #e0e9e3;
+  border-radius:15px;
+  padding:20px;
+}
+.value{font-size:27px;font-weight:bold;color:var(--green);margin-top:9px}
+.status{margin-top:18px}
+button{
+  border:0;border-radius:9px;padding:12px 18px;
+  font-size:14px;font-weight:bold;cursor:pointer;
+  font-family:inherit;margin:4px 0;
+}
+.primary{background:var(--green2);color:white}
+.secondary{background:#eaf1ec;color:var(--green)}
+button:disabled{opacity:.6;cursor:not-allowed}
+.overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(5,20,12,.84);
+  display:flex;align-items:center;justify-content:center;
+  padding:14px;overflow-y:auto;
+}
+.modal{
+  width:min(760px,100%);background:white;
+  border-radius:17px;overflow:hidden;
+  box-shadow:0 20px 65px #0004;
+}
+.modal-header{
+  padding:19px 21px;display:flex;
+  justify-content:space-between;gap:12px;
+  align-items:flex-start;border-bottom:1px solid #e6ece8;
+}
+.modal-header h2{margin:0 0 7px;font-size:21px}
+.close{padding:7px 12px;background:#edf1ee;color:#34473b}
+.video-area{background:#000;padding:10px}
+.video-frame{
+  position:relative;width:100%;aspect-ratio:16/9;
+  background:#000;overflow:hidden;border-radius:8px;
+}
+#player{position:absolute;inset:0;width:100%;height:100%}
+.details{padding:18px 21px 21px}
+.progress-label{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:13px;margin-bottom:9px;
+}
+.track{height:9px;background:#e8eee9;border-radius:20px;overflow:hidden}
+#progress{width:0;height:100%;background:var(--gold)}
+.notice{
+  padding:12px;margin-top:15px;border-radius:9px;
+  background:#f2f6f3;color:#4f6255;font-size:13px;line-height:1.7;
+}
+.actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:15px}
+.hidden{display:none!important}
+footer{text-align:center;font-size:12px;color:var(--muted);margin:25px}
+@media(max-width:600px){
+  .cards{grid-template-columns:1fr}
+  h1{font-size:22px}
+  .modal-header,.details{padding:15px}
+  .video-area{padding:5px}
+}
+</style>
 </head>
 
 <body>
-
 <header>
   <div>
     <strong>Taxi Driver Software</strong>
-    <small>ڈرائیور ڈیش بورڈ</small>
+    <small>Driver Dashboard</small>
   </div>
   <span>Demo Account</span>
 </header>
 
 <main>
-  <section class="welcome">
-    <h1>السلام علیکم، خوش آمدید!</h1>
-    <p class="muted">
-      اپنی روزانہ کی کمائی اور ٹارگٹ کی تفصیلات دیکھیں۔
-      یہ صفحہ ٹیوٹوریل سسٹم کی آزمائش کے لیے ہے۔
-    </p>
-  </section>
+  <h1>Welcome to Your Dashboard</h1>
+  <p class="muted">
+    Manage your daily earnings, targets and shift details.
+    Watch the tutorial to get started.
+  </p>
 
   <section class="cards">
     <div class="card">
-      <div class="muted">موجودہ کلیکشن</div>
+      <div class="muted">Current Collection</div>
       <div class="value">AED 425</div>
     </div>
-
     <div class="card">
-      <div class="muted">روزانہ ٹارگٹ</div>
+      <div class="muted">Daily Target</div>
       <div class="value">AED 800</div>
     </div>
-
     <div class="card">
-      <div class="muted">کمیشن</div>
+      <div class="muted">Commission</div>
       <div class="value">35%</div>
     </div>
   </section>
 
-  <section class="tutorial-status">
-    <h2 id="statusTitle">ٹیوٹوریل مکمل کرنا باقی ہے</h2>
+  <section class="status">
+    <h2 id="statusTitle">Tutorial Required</h2>
     <p id="statusText" class="muted">
-      ویڈیو مکمل کریں یا بند کرکے بعد میں وہیں سے جاری رکھیں۔
+      Complete the tutorial to finish this demo.
     </p>
     <button id="resumeButton" class="primary" onclick="openTutorial()">
-      ٹیوٹوریل جاری رکھیں
+      Resume Tutorial
     </button>
     <button class="secondary" onclick="resetDemo()">
-      ڈیمو دوبارہ شروع کریں
+      Reset Demo
     </button>
   </section>
-
-  <p class="footer">
-    HTML Demo — اس صفحے پر کوئی اصل ڈرائیور ڈیٹا استعمال نہیں ہو رہا۔
-  </p>
 </main>
 
 <div id="overlay" class="overlay">
   <section class="modal" role="dialog" aria-modal="true">
-
     <div class="modal-header">
       <div>
-        <h2 id="modalTitle">سافٹ ویئر استعمال کرنے کا ٹیوٹوریل</h2>
-        <p class="muted" style="margin:0;font-size:13px">
-          ویڈیو بند کریں تو آپ کی پیش رفت محفوظ رہے گی۔
+        <h2 id="modalTitle">Welcome! Watch This Tutorial First</h2>
+        <p class="muted">
+          Your progress is saved automatically. You can resume later.
         </p>
       </div>
-
-      <button class="close" onclick="closeTutorial()" aria-label="بند کریں">
-        ✕
-      </button>
+      <button class="close" onclick="closeTutorial()" aria-label="Close">✕</button>
     </div>
 
     <div class="video-area">
@@ -301,8 +166,8 @@
 
     <div class="details">
       <div class="progress-label">
-        <span>ویڈیو کی پیش رفت</span>
-        <span id="timeLabel">پلیئر لوڈ ہو رہا ہے...</span>
+        <span>Video Progress</span>
+        <span id="timeLabel">Loading player...</span>
       </div>
 
       <div class="track">
@@ -310,283 +175,261 @@
       </div>
 
       <div id="notice" class="notice">
-        ویڈیو خود نہ چلے تو پلیئر کے اندر Play دبائیں۔
+        Loading your tutorial. Autoplay will be attempted automatically.
       </div>
 
       <div class="actions">
         <span class="muted" style="font-size:12px">
-          آپ کی پیش رفت اس براؤزر میں محفوظ ہوگی۔
+          Progress is saved in this browser.
         </span>
         <button class="secondary" onclick="closeTutorial()">
-          ابھی بند کریں
+          Close for Now
         </button>
       </div>
-
-      <p style="font-size:12px" class="muted">
-        ویڈیو مکمل ہونے پر یہ ڈیمو اسے دوبارہ نہیں دکھائے گا۔
-      </p>
     </div>
   </section>
 </div>
 
+<footer>Taxi Driver Software — Tutorial Demo</footer>
+
 <script>
-  // آپ کی YouTube ویڈیو
-  const VIDEO_ID = "xFGi__79snw";
+const VIDEO_ID = "xFGi__79snw";
+const PROGRESS_KEY = "taxi_tutorial_demo_position";
+const COMPLETE_KEY = "taxi_tutorial_demo_complete";
 
-  // یہ صرف ڈیمو کے لیے ہے، اصل ویب سائٹ کے لیے Firestore استعمال ہوگا۔
-  const PROGRESS_KEY = "taxi_tutorial_demo_position";
-  const COMPLETE_KEY = "taxi_tutorial_demo_complete";
+let player = null;
+let playerReady = false;
+let duration = 0;
+let savedPosition = Number(localStorage.getItem(PROGRESS_KEY) || 0);
+let saveTimer = null;
+let lastSave = 0;
 
-  let player = null;
-  let playerReady = false;
-  let duration = 0;
-  let savedPosition = Number(localStorage.getItem(PROGRESS_KEY) || 0);
-  let lastSaveTime = 0;
-  let saveTimer = null;
-  let pendingSeek = false;
+const overlay = document.getElementById("overlay");
+const progressBar = document.getElementById("progress");
+const timeLabel = document.getElementById("timeLabel");
+const notice = document.getElementById("notice");
 
-  const overlay = document.getElementById("overlay");
-  const progressBar = document.getElementById("progress");
-  const timeLabel = document.getElementById("timeLabel");
-  const notice = document.getElementById("notice");
+function formatTime(value) {
+  value = Math.max(0, Math.floor(value || 0));
+  return String(Math.floor(value / 60)).padStart(2, "0") +
+    ":" + String(value % 60).padStart(2, "0");
+}
 
-  function formatTime(seconds) {
-    seconds = Math.max(0, Math.floor(seconds || 0));
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+function isComplete() {
+  return localStorage.getItem(COMPLETE_KEY) === "yes";
+}
 
-    return String(mins).padStart(2, "0") + ":" +
-           String(secs).padStart(2, "0");
+function updateStatus() {
+  const done = isComplete();
+
+  document.getElementById("statusTitle").textContent =
+    done ? "Tutorial Completed" : "Tutorial Required";
+
+  document.getElementById("statusText").textContent =
+    done
+      ? "You have completed this tutorial in this browser."
+      : "Watch the tutorial before continuing.";
+
+  const button = document.getElementById("resumeButton");
+  button.textContent = done ? "Tutorial Completed" : "Resume Tutorial";
+  button.disabled = done;
+}
+
+function updateProgress(current) {
+  const percent = duration
+    ? Math.min(100, current / duration * 100)
+    : 0;
+
+  progressBar.style.width = percent + "%";
+  timeLabel.textContent =
+    formatTime(current) + (duration ? " / " + formatTime(duration) : "");
+}
+
+function savePosition() {
+  if (!playerReady || !player || isComplete()) return;
+
+  try {
+    const current = player.getCurrentTime();
+
+    if (Number.isFinite(current)) {
+      savedPosition = current;
+      localStorage.setItem(PROGRESS_KEY, String(current));
+      lastSave = Date.now();
+    }
+  } catch (error) {
+    console.warn("Could not save progress:", error);
   }
+}
 
-  function isComplete() {
-    return localStorage.getItem(COMPLETE_KEY) === "yes";
-  }
+function openTutorial() {
+  if (isComplete()) return;
 
-  function updateStatus() {
-    const done = isComplete();
+  overlay.classList.remove("hidden");
 
-    document.getElementById("statusTitle").textContent =
-      done ? "ٹیوٹوریل مکمل ہوگیا ✓" : "ٹیوٹوریل مکمل کرنا باقی ہے";
-
-    document.getElementById("statusText").textContent =
-      done
-        ? "اس براؤزر میں ٹیوٹوریل مکمل محفوظ ہے۔"
-        : "ویڈیو بند کرنے پر پیش رفت محفوظ رہے گی۔";
-
-    const button = document.getElementById("resumeButton");
-    button.textContent = done ? "ٹیوٹوریل مکمل" : "ویڈیو جاری رکھیں";
-    button.disabled = done;
-  }
-
-  function updateProgress(current) {
-    const percent = duration > 0
-      ? Math.min(100, (current / duration) * 100)
-      : 0;
-
-    progressBar.style.width = percent + "%";
-    timeLabel.textContent =
-      formatTime(current) + (duration ? " / " + formatTime(duration) : "");
-  }
-
-  function savePosition(force = false) {
-    if (!playerReady || !player) return;
-
+  if (playerReady) {
     try {
-      const current = player.getCurrentTime();
-
-      if (Number.isFinite(current)) {
-        savedPosition = current;
-        localStorage.setItem(PROGRESS_KEY, String(current));
-        lastSaveTime = Date.now();
-      }
-    } catch (error) {
-      console.warn("Position save failed:", error);
-    }
-  }
-
-  function openTutorial() {
-    if (isComplete()) return;
-
-    overlay.classList.remove("hidden");
-
-    if (playerReady) {
       if (savedPosition > 0) {
-        try {
-          player.seekTo(savedPosition, true);
-        } catch (error) {}
+        player.seekTo(savedPosition, true);
       }
-
-      notice.textContent =
-        "ویڈیو جاری رکھنے کے لیے Play دبائیں۔";
+      player.playVideo();
+    } catch (error) {
+      notice.textContent = "Press Play to start the tutorial.";
     }
   }
+}
 
-  function closeTutorial() {
-    savePosition(true);
+function closeTutorial() {
+  savePosition();
 
-    if (playerReady && player) {
-      try {
-        player.pauseVideo();
-      } catch (error) {}
-    }
-
-    overlay.classList.add("hidden");
-    updateStatus();
+  if (playerReady && player) {
+    try {
+      player.pauseVideo();
+    } catch (error) {}
   }
 
-  function resetDemo() {
-    const confirmed = confirm(
-      "کیا آپ ڈیمو کی محفوظ شدہ پیش رفت اور تکمیل ختم کرنا چاہتے ہیں؟"
-    );
+  overlay.classList.add("hidden");
+  updateStatus();
+}
 
-    if (!confirmed) return;
-
-    localStorage.removeItem(PROGRESS_KEY);
-    localStorage.removeItem(COMPLETE_KEY);
-    savedPosition = 0;
-
-    updateStatus();
-    overlay.classList.remove("hidden");
-
-    if (playerReady && player) {
-      try {
-        player.seekTo(0, true);
-        player.pauseVideo();
-      } catch (error) {}
-    }
-
-    notice.textContent = "ڈیمو ری سیٹ ہوگیا۔ اب دوبارہ ٹیسٹ کرسکتے ہیں۔";
+function resetDemo() {
+  if (!confirm("Reset tutorial progress and completion for this demo?")) {
+    return;
   }
 
-  // YouTube IFrame API اس فنکشن کو خود کال کرتی ہے۔
-  function onYouTubeIframeAPIReady() {
-    const playerVars = {
-      controls: 1,
-      playsinline: 1,
-      rel: 0,
-      enablejsapi: 1
-    };
+  localStorage.removeItem(PROGRESS_KEY);
+  localStorage.removeItem(COMPLETE_KEY);
+  savedPosition = 0;
 
-    // HTTPS یا HTTP ہوسٹنگ پر origin شامل کریں۔
-    if (location.protocol === "https:" ||
-        location.protocol === "http:") {
-      playerVars.origin = location.origin;
-    }
+  updateStatus();
+  overlay.classList.remove("hidden");
 
-    player = new YT.Player("player", {
-      videoId: VIDEO_ID,
-      playerVars: playerVars,
+  if (playerReady && player) {
+    try {
+      player.seekTo(0, true);
+      player.pauseVideo();
+    } catch (error) {}
+  }
 
-      events: {
-        onReady: function(event) {
-          playerReady = true;
+  notice.textContent = "Demo reset. You can test the tutorial again.";
+}
 
+function onYouTubeIframeAPIReady() {
+  const playerVars = {
+    enablejsapi: 1,
+    autoplay: 1,
+    playsinline: 1,
+    controls: 1,
+    rel: 0,
+    mute: 1
+  };
+
+  if (location.protocol === "https:" ||
+      location.protocol === "http:") {
+    playerVars.origin = location.origin;
+  }
+
+  player = new YT.Player("player", {
+    videoId: VIDEO_ID,
+    playerVars: playerVars,
+
+    events: {
+      onReady: function(event) {
+        playerReady = true;
+        duration = event.target.getDuration() || 0;
+
+        if (savedPosition > 0) {
           try {
-            duration = event.target.getDuration() || 0;
+            event.target.seekTo(savedPosition, true);
+          } catch (error) {}
+        }
 
-            if (savedPosition > 0) {
-              event.target.seekTo(savedPosition, true);
-              pendingSeek = true;
-            }
+        updateProgress(savedPosition);
+        notice.textContent =
+          "Autoplay attempted. If playback does not start, press Play.";
 
-            updateProgress(savedPosition);
-            timeLabel.textContent =
-              formatTime(savedPosition) +
-              (duration ? " / " + formatTime(duration) : "");
+        // Muted autoplay is more likely to be allowed by browsers.
+        // Sound can be enabled using the YouTube player's controls.
+        try {
+          event.target.mute();
+          event.target.playVideo();
+        } catch (error) {}
 
-            notice.textContent =
-              "پلیئر تیار ہے۔ ویڈیو چلانے کے لیے Play دبائیں۔";
-          } catch (error) {
-            notice.textContent =
-              "پلیئر تیار ہونے میں مسئلہ ہے۔ صفحہ دوبارہ کھول کر آزمائیں۔";
-          }
-
-          saveTimer = setInterval(function() {
+        saveTimer = setInterval(function() {
+          try {
             if (!playerReady || !player) return;
 
-            try {
-              const current = player.getCurrentTime() || 0;
-              duration = player.getDuration() || duration;
+            duration = player.getDuration() || duration;
+            const current = player.getCurrentTime() || 0;
 
-              updateProgress(current);
+            updateProgress(current);
 
-              if (Date.now() - lastSaveTime >= 2000) {
-                savePosition();
-              }
-            } catch (error) {}
-          }, 1000);
-        },
+            if (Date.now() - lastSave >= 2000) {
+              savePosition();
+            }
+          } catch (error) {}
+        }, 1000);
+      },
 
-        onStateChange: function(event) {
-          // ویڈیو مکمل ہونے پر ریکارڈ محفوظ کریں۔
-          if (event.data === YT.PlayerState.ENDED) {
-            localStorage.setItem(COMPLETE_KEY, "yes");
-            localStorage.removeItem(PROGRESS_KEY);
-
-            savedPosition = 0;
-            progressBar.style.width = "100%";
-            notice.textContent =
-              "مبارک ہو! ڈیمو میں ٹیوٹوریل مکمل ہوگیا ہے۔";
-
-            updateStatus();
-
-            setTimeout(function() {
-              overlay.classList.add("hidden");
-            }, 1800);
-          }
-
-          if (event.data === YT.PlayerState.PLAYING) {
-            notice.textContent =
-              "ویڈیو چل رہی ہے۔ پیش رفت خودکار طور پر محفوظ ہوگی۔";
-          }
-
-          if (event.data === YT.PlayerState.PAUSED) {
-            savePosition(true);
-          }
-        },
-
-        onError: function(event) {
-          console.error("YouTube Player error:", event.data);
-
+      onStateChange: function(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
           notice.textContent =
-            "YouTube پلیئر میں خرابی آگئی ہے۔ نیچے دیا گیا لنک کھول کر ویڈیو چیک کریں۔";
+            "Tutorial is playing. Progress is saved automatically.";
+        }
 
+        if (event.data === YT.PlayerState.PAUSED) {
+          savePosition();
+        }
+
+        if (event.data === YT.PlayerState.ENDED) {
+          localStorage.setItem(COMPLETE_KEY, "yes");
+          localStorage.removeItem(PROGRESS_KEY);
+
+          progressBar.style.width = "100%";
+          notice.textContent =
+            "Congratulations! You have completed the tutorial.";
+
+          updateStatus();
+
+          setTimeout(function() {
+            overlay.classList.add("hidden");
+          }, 1500);
+        }
+      },
+
+      onError: function(event) {
+        console.error("YouTube Player error:", event.data);
+
+        notice.textContent =
+          "The player could not load. Open the video directly on YouTube to check it.";
+
+        if (!notice.querySelector("a")) {
           const link = document.createElement("a");
           link.href = "https://www.youtube.com/watch?v=" + VIDEO_ID;
           link.target = "_blank";
           link.rel = "noopener";
-          link.textContent = "YouTube پر ویڈیو کھولیں";
-          link.style.display = "inline-block";
-          link.style.marginTop = "8px";
-
-          if (!notice.querySelector("a")) {
-            notice.appendChild(document.createElement("br"));
-            notice.appendChild(link);
-          }
+          link.textContent = "Watch on YouTube";
+          notice.appendChild(document.createElement("br"));
+          notice.appendChild(link);
         }
       }
-    });
-  }
+    }
+  });
+}
 
-  updateStatus();
+updateStatus();
 
-  // اگر پہلے مکمل ہوچکی ہے تو دوبارہ ویڈیو نہ دکھائیں۔
-  if (isComplete()) {
-    overlay.classList.add("hidden");
-  }
+if (isComplete()) {
+  overlay.classList.add("hidden");
+}
 
-  // YouTube کی آفیشل Player API لوڈ کریں۔
-  const apiScript = document.createElement("script");
-  apiScript.src = "https://www.youtube.com/iframe_api";
-  apiScript.onerror = function() {
-    timeLabel.textContent = "API لوڈ نہیں ہوئی";
-    notice.textContent =
-      "YouTube API لوڈ نہیں ہوسکی۔ انٹرنیٹ یا ہوسٹنگ چیک کریں۔";
-  };
-
-  document.head.appendChild(apiScript);
+const apiScript = document.createElement("script");
+apiScript.src = "https://www.youtube.com/iframe_api";
+apiScript.onerror = function() {
+  timeLabel.textContent = "API failed to load";
+  notice.textContent =
+    "Check your internet connection and hosting environment.";
+};
+document.head.appendChild(apiScript);
 </script>
-
 </body>
 </html>

@@ -26,7 +26,7 @@ button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14p
 .videoStage{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:10px}
 #player{position:absolute;inset:0;width:100%;height:100%}
 .gestureLayer{position:absolute;inset:0;z-index:2;background:transparent;touch-action:manipulation}
-.videoControls{position:absolute;z-index:5;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.videoControls{position:absolute;z-index:5;bottom:10px;right:10px;display:flex;gap:8px;pointer-events:none}
 .videoControls button{pointer-events:auto}
 .fullBtn{background:#ffffffed;color:#111;font-size:24px;font-weight:bold;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center}
 .fullExitBtn{display:none;position:absolute;z-index:10;top:12px;right:12px;background:#ffffffed;color:#111;font-weight:bold}
@@ -37,7 +37,12 @@ button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14p
 .actions button{background:#173d32;color:white}
 .progressTrack{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:8px}
 .progressFill{height:100%;width:0%;background:#d5a943}
-@media(max-width:500px){.tutorial{padding:10px}.modalTop{align-items:flex-start}button{padding:9px 11px}.fullBtn{padding:0;width:44px;height:44px}}
+@media(max-width:500px){
+  .tutorial{padding:10px}
+  .modalTop{align-items:flex-start}
+  button{padding:9px 11px}
+  .fullBtn{padding:0;width:44px;height:44px}
+}
 </style>
 </head>
 
@@ -72,14 +77,18 @@ button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14p
     <div class="videoStage" id="videoStage">
       <div id="player"></div>
       <div class="gestureLayer" id="gestureLayer"></div>
+
+      <!-- فل اسکرین کا نشان ویڈیو کے نیچے دائیں جانب -->
       <div class="videoControls">
-        <span></span>
-        <button class="fullBtn" id="fullBtn" aria-label="Full Screen" title="Full Screen">⛶</button>
+        <button class="fullBtn" id="fullBtn"
+          aria-label="Full Screen" title="Full Screen">⛶</button>
       </div>
+
       <button class="fullExitBtn" id="fullExitBtn">✕ Exit Full Screen</button>
     </div>
 
     <div class="status" id="status">Status: Pending</div>
+
     <div class="progressTrack">
       <div class="progressFill" id="progressFill"></div>
     </div>
@@ -117,6 +126,8 @@ let playerReady = false;
 let currentLanguage = "urdu";
 let progressTimer = null;
 let singleTapTimer = null;
+let completeCloseTimer = null;
+let wakeLock = null;
 let lastSavedSecond = -1;
 
 function readState(){
@@ -147,7 +158,9 @@ function setTutorialStatus(status){
   try{
     localStorage.setItem(STATUS_KEY,status);
   }catch(e){}
-  showStatus("Status: " + (status === "complete" ? "Complete" : "Pending"));
+
+  showStatus("Status: " +
+    (status === "complete" ? "Complete" : "Pending"));
 }
 
 function saveState(){
@@ -160,7 +173,10 @@ function saveState(){
 }
 
 function savedPosition(){
-  return Math.max(0,Math.floor(savedState.positions[currentLanguage] || 0));
+  return Math.max(
+    0,
+    Math.floor(savedState.positions[currentLanguage] || 0)
+  );
 }
 
 function updateLanguageButtons(){
@@ -172,16 +188,59 @@ function showStatus(message){
   statusBox.textContent = message;
 }
 
+/* اسکرین کو جاگتا رکھنے کی سہولت */
+async function requestScreenWakeLock(){
+  if(!modal.classList.contains("open")) return;
+  if(document.visibilityState !== "visible") return;
+  if(!("wakeLock" in navigator)) return;
+
+  try{
+    if(wakeLock && !wakeLock.released) return;
+
+    wakeLock = await navigator.wakeLock.request("screen");
+
+    wakeLock.addEventListener("release",()=>{
+      wakeLock = null;
+    });
+  }catch(error){
+    // اگر براؤزر Wake Lock کی اجازت نہ دے تو باقی فیچرز چلتے رہیں گے۔
+    wakeLock = null;
+  }
+}
+
+async function releaseScreenWakeLock(){
+  if(!wakeLock) return;
+
+  try{
+    await wakeLock.release();
+  }catch(error){}
+
+  wakeLock = null;
+}
+
 function openPopup(){
+  if(getTutorialStatus() === "complete"){
+    showStatus("Status: Complete");
+    return;
+  }
+
   modal.classList.add("open");
+  requestScreenWakeLock();
+
   if(playerReady && player){
     startProgressTimer();
   }
 }
 
 function closePopup(){
+  if(completeCloseTimer){
+    clearTimeout(completeCloseTimer);
+    completeCloseTimer = null;
+  }
+
   saveCurrentPosition();
   stopProgressTimer();
+  releaseScreenWakeLock();
 
   if(document.fullscreenElement === videoStage){
     document.exitFullscreen().catch(()=>{});
@@ -193,6 +252,7 @@ function closePopup(){
   if(playerReady && player){
     player.pauseVideo();
   }
+
   modal.classList.remove("open");
 }
 
@@ -202,10 +262,12 @@ function saveCurrentPosition(){
   try{
     if(player.getPlayerState() !== YT.PlayerState.ENDED){
       const seconds = Math.floor(player.getCurrentTime() || 0);
+
       if(seconds >= 0){
         savedState.positions[currentLanguage] = seconds;
       }
     }
+
     saveState();
   }catch(e){}
 }
@@ -214,7 +276,8 @@ function startProgressTimer(){
   stopProgressTimer();
 
   progressTimer = setInterval(()=>{
-    if(!playerReady || !player || !modal.classList.contains("open")) return;
+    if(!playerReady || !player ||
+       !modal.classList.contains("open")) return;
 
     try{
       const duration = player.getDuration() || 0;
@@ -223,6 +286,7 @@ function startProgressTimer(){
 
       if(state === YT.PlayerState.PLAYING){
         const second = Math.floor(current);
+
         if(second !== lastSavedSecond){
           savedState.positions[currentLanguage] = second;
           lastSavedSecond = second;
@@ -234,11 +298,10 @@ function startProgressTimer(){
         ? Math.min(100,current/duration*100) + "%"
         : "0%";
 
-      if(getTutorialStatus() === "complete"){
-        showStatus("Status: Complete");
-      }else{
-        showStatus("Status: Pending");
-      }
+      showStatus(
+        "Status: " +
+        (getTutorialStatus() === "complete" ? "Complete" : "Pending")
+      );
     }catch(e){}
   },1000);
 }
@@ -264,6 +327,7 @@ function togglePlayPause(){
     player.setVolume(100);
     player.playVideo();
     playPauseBtn.textContent = "⏸ Pause";
+    requestScreenWakeLock();
   }
 }
 
@@ -271,8 +335,10 @@ function switchLanguage(language){
   if(language === currentLanguage) return;
 
   saveCurrentPosition();
+
   currentLanguage = language;
   savedState.language = language;
+
   saveState();
   updateLanguageButtons();
   progressFill.style.width = "0%";
@@ -306,7 +372,8 @@ async function exitFullscreen(){
   try{
     if(document.fullscreenElement && document.exitFullscreen){
       await document.exitFullscreen();
-    }else if(document.webkitFullscreenElement && document.webkitExitFullscreen){
+    }else if(document.webkitFullscreenElement &&
+             document.webkitExitFullscreen){
       document.webkitExitFullscreen();
     }
   }catch(e){}
@@ -326,6 +393,7 @@ closeBtn.addEventListener("click",closePopup);
 playPauseBtn.addEventListener("click",togglePlayPause);
 fullBtn.addEventListener("click",toggleFullscreen);
 fullExitBtn.addEventListener("click",exitFullscreen);
+
 urduBtn.addEventListener("click",()=>switchLanguage("urdu"));
 englishBtn.addEventListener("click",()=>switchLanguage("english"));
 
@@ -336,13 +404,15 @@ document.addEventListener("fullscreenchange",()=>{
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState === "hidden"){
     saveCurrentPosition();
+  }else if(modal.classList.contains("open")){
+    requestScreenWakeLock();
   }
 });
 
 window.addEventListener("pagehide",saveCurrentPosition);
 window.addEventListener("beforeunload",saveCurrentPosition);
 
-/* Single tap = Play/Pause; double tap = Full Screen */
+/* سنگل ٹیپ = Play/Pause، ڈبل ٹیپ = Full Screen */
 gestureLayer.addEventListener("click",()=>{
   if(singleTapTimer){
     clearTimeout(singleTapTimer);
@@ -358,6 +428,7 @@ gestureLayer.addEventListener("click",()=>{
 
 function loadYouTubeAPI(){
   if(document.getElementById("youtubeIframeApi")) return;
+
   const tag = document.createElement("script");
   tag.id = "youtubeIframeApi";
   tag.src = "https://www.youtube.com/iframe_api";
@@ -383,27 +454,57 @@ window.onYouTubeIframeAPIReady = function(){
         playerReady = true;
         event.target.pauseVideo();
         event.target.seekTo(savedPosition(),true);
+
         updateLanguageButtons();
-        startProgressTimer();
-        showStatus("Status: " + (getTutorialStatus() === "complete" ? "Complete" : "Pending"));
+
+        if(modal.classList.contains("open")){
+          startProgressTimer();
+          requestScreenWakeLock();
+        }
+
+        showStatus(
+          "Status: " +
+          (getTutorialStatus() === "complete" ? "Complete" : "Pending")
+        );
       },
+
       onStateChange:function(event){
         if(event.data === YT.PlayerState.PLAYING){
           playPauseBtn.textContent = "⏸ Pause";
+          requestScreenWakeLock();
+
         }else if(event.data === YT.PlayerState.PAUSED){
           playPauseBtn.textContent = "▶ Play";
           saveCurrentPosition();
+
         }else if(event.data === YT.PlayerState.ENDED){
           savedState.positions[currentLanguage] = 0;
           saveState();
+
           progressFill.style.width = "100%";
           setTutorialStatus("complete");
           playPauseBtn.textContent = "▶ Play";
+
+          // Complete اسٹیٹس دکھانے کے بعد پاپ اَپ خود بند ہوگا۔
+          stopProgressTimer();
+
+          if(completeCloseTimer){
+            clearTimeout(completeCloseTimer);
+          }
+
+          completeCloseTimer = setTimeout(()=>{
+            closePopup();
+            completeCloseTimer = null;
+          },1200);
         }
       },
+
       onError:function(){
-        showStatus("ویڈیو لوڈ نہیں ہو سکی۔ انٹرنیٹ اور YouTube ویڈیو کی دستیابی چیک کریں۔");
+        showStatus(
+          "ویڈیو لوڈ نہیں ہو سکی۔ انٹرنیٹ اور YouTube ویڈیو کی دستیابی چیک کریں۔"
+        );
       },
+
       onAutoplayBlocked:function(){
         showStatus("ویڈیو چلانے کے لیے Play دبائیں۔");
       }
@@ -420,6 +521,7 @@ window.addEventListener("load",()=>{
   }else{
     modal.classList.remove("open");
     showStatus("Status: Complete");
+    releaseScreenWakeLock();
   }
 });
 </script>

@@ -2,756 +2,450 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Driver Tutorial Test</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driver Tutorial Test</title>
 
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      color: #172033;
-    }
-
-    button {
-      border: 0;
-      border-radius: 9px;
-      padding: 11px 16px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    button:focus-visible {
-      outline: 3px solid #f59e0b;
-      outline-offset: 3px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: flex-end;
-      padding: 14px;
-    }
-
-    .help-btn, .primary {
-      background: #166534;
-      color: #fff;
-    }
-
-    .page {
-      max-width: 850px;
-      margin: 0 auto;
-      padding: 10px 16px 40px;
-    }
-
-    .page h1 {
-      font-size: 25px;
-      text-align: center;
-    }
-
-    .page p {
-      color: #64748b;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 25px;
-    }
-
-    .tile {
-      padding: 20px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-    }
-
-    .tile strong {
-      display: block;
-      color: #166534;
-      margin-bottom: 8px;
-    }
-
-    .tile span {
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      background: rgba(15, 23, 42, 0.82);
-      overflow-y: auto;
-    }
-
-    .modal[hidden] {
-      display: none !important;
-    }
-
-    .modal-card {
-      width: min(900px, 100%);
-      max-height: 96vh;
-      overflow-y: auto;
-      background: #fff;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .modal-header h2 {
-      font-size: 22px;
-      margin: 0;
-    }
-
-    .close-btn {
-      background: #fee2e2;
-      color: #991b1b;
-      flex-shrink: 0;
-    }
-
-    .languages, .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin: 14px 0;
-    }
-
-    .lang-btn, .secondary {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
-
-    .lang-btn.active {
-      background: #166534;
-      color: #fff;
-    }
-
-    .video-frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      overflow: hidden;
-      border-radius: 10px;
-    }
-
-    #player {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    /* Captures single and double taps for custom player actions. */
-    .gesture-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      background: transparent;
-      touch-action: manipulation;
-      cursor: pointer;
-    }
-
-    .gesture-layer:focus-visible {
-      outline: 3px solid #f59e0b;
-      outline-offset: -4px;
-    }
-
-    .status {
-      min-height: 22px;
-      margin: 12px 0;
-      text-align: center;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #475569;
-    }
-
-    .progress-wrap {
-      margin: 10px 0 16px;
-    }
-
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 13px;
-      color: #475569;
-      margin-bottom: 6px;
-    }
-
-    .progress-track {
-      height: 7px;
-      border-radius: 99px;
-      overflow: hidden;
-      background: #e2e8f0;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: #16a34a;
-      transition: width 0.2s linear;
-    }
-
-    .hint {
-      font-size: 13px;
-      color: #64748b;
-      line-height: 1.6;
-      text-align: center;
-    }
-
-    @media (max-width: 600px) {
-      .modal-card { padding: 14px; }
-      .modal-header h2 { font-size: 19px; }
-      .dashboard { grid-template-columns: 1fr; }
-      button { padding: 10px 13px; }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172033}
+button{border:0;border-radius:9px;padding:11px 15px;font-size:15px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.topbar{display:flex;justify-content:flex-end;padding:14px}
+.help,.primary{background:#166534;color:white}
+.page{max-width:850px;margin:auto;padding:10px 16px 40px}
+.page h1{text-align:center;font-size:25px}
+.page p{text-align:center;color:#64748b;line-height:1.6}
+.dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:25px}
+.tile{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px}
+.tile strong{display:block;color:#166534;margin-bottom:8px}
+.tile span{font-size:14px;color:#64748b}
+.modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(15,23,42,.84);overflow:auto}
+.modal[hidden]{display:none!important}
+.card{width:min(900px,100%);max-height:96vh;overflow:auto;background:white;border-radius:15px;padding:18px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.header h2{font-size:21px;margin:0}
+.close{background:#fee2e2;color:#991b1b}
+.languages,.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:13px 0}
+.lang,.secondary{background:#e2e8f0;color:#1e293b}
+.lang.active{background:#166534;color:white}
+.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:10px}
+#player{position:absolute;inset:0;width:100%;height:100%;border:0}
+.gesture{position:absolute;inset:0;z-index:2;background:transparent;touch-action:manipulation;cursor:pointer}
+.status{text-align:center;min-height:22px;font-size:14px;line-height:1.6;color:#475569;margin:12px 0}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;color:#475569;margin-bottom:6px}
+.track{height:7px;background:#e2e8f0;border-radius:10px;overflow:hidden}
+.fill{height:100%;width:0;background:#16a34a}
+.hint{text-align:center;font-size:13px;color:#64748b;line-height:1.6}
+.exit-fullscreen{display:none;position:fixed;z-index:2000;top:15px;right:15px;background:#991b1b;color:white}
+.exit-fullscreen.visible{display:block}
+@media(max-width:600px){
+ .card{padding:12px}
+ .header h2{font-size:18px}
+ .dashboard{grid-template-columns:1fr}
+ button{padding:10px 12px}
+}
+</style>
 </head>
 
 <body>
+<div class="topbar">
+  <button class="help" id="helpBtn">❓ Help / مدد</button>
+</div>
 
-  <div class="topbar">
-    <button type="button" class="help-btn" id="helpBtn">
-      ❓ Help / مدد
-    </button>
+<main class="page">
+  <h1>Driver Software Dashboard</h1>
+  <p>Test dashboard — use Help to open the tutorial.</p>
+  <div class="dashboard">
+    <div class="tile"><strong>New Invoice</strong><span>Create and manage invoices.</span></div>
+    <div class="tile"><strong>Charge Setup</strong><span>Manage charges and deductions.</span></div>
+    <div class="tile"><strong>Target Setup</strong><span>Set your earning target.</span></div>
+    <div class="tile"><strong>Leaves</strong><span>Manage leave records.</span></div>
+    <div class="tile"><strong>Reports</strong><span>Review your records.</span></div>
+    <div class="tile"><strong>Shift Summary</strong><span>Review shift performance.</span></div>
   </div>
+</main>
 
-  <main class="page">
-    <h1>Driver Software Dashboard</h1>
-    <p>
-      This is a test dashboard. Use the Help button to open the tutorial.
+<section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="title">
+  <div class="card">
+    <div class="header">
+      <h2 id="title">Driver Software Tutorial</h2>
+      <button class="close" id="closeBtn">✕ Close</button>
+    </div>
+
+    <div class="languages">
+      <button class="lang active" id="urduBtn">اردو</button>
+      <button class="lang" id="englishBtn">English</button>
+    </div>
+
+    <div class="frame" id="frame">
+      <div id="player"></div>
+      <div class="gesture" id="gesture" role="button" tabindex="0"
+           aria-label="Tap to play or pause. Double tap for fullscreen."></div>
+    </div>
+
+    <p class="status" id="status" aria-live="polite">Loading video...</p>
+
+    <div>
+      <div class="progress-label">
+        <span>Video progress</span>
+        <span id="percent">0%</span>
+      </div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="playPauseBtn" disabled>▶ Play</button>
+      <button class="secondary" id="resumeBtn" disabled>↻ Resume</button>
+      <button class="secondary" id="fullscreenBtn">⛶ Fullscreen</button>
+    </div>
+
+    <p class="hint">
+      Single tap: Play/Pause. Double tap: Fullscreen.
+      If sound does not start automatically, press Play.
     </p>
+  </div>
+</section>
 
-    <div class="dashboard">
-      <div class="tile">
-        <strong>New Invoice</strong>
-        <span>Create and manage invoices.</span>
-      </div>
-      <div class="tile">
-        <strong>Charge Setup</strong>
-        <span>Manage charges and deductions.</span>
-      </div>
-      <div class="tile">
-        <strong>Target Setup</strong>
-        <span>Set your earning target.</span>
-      </div>
-      <div class="tile">
-        <strong>Leaves</strong>
-        <span>Manage leave records.</span>
-      </div>
-      <div class="tile">
-        <strong>Reports</strong>
-        <span>Review your records.</span>
-      </div>
-      <div class="tile">
-        <strong>Shift Summary</strong>
-        <span>Review your shift performance.</span>
-      </div>
-    </div>
-  </main>
+<button class="exit-fullscreen" id="exitFullscreenBtn">✕ Exit Fullscreen</button>
 
-  <!-- Tutorial popup -->
-  <section class="modal" id="tutorialModal"
-           role="dialog" aria-modal="true"
-           aria-labelledby="tutorialTitle">
+<script>
+(() => {
+  "use strict";
 
-    <div class="modal-card">
+  const videos = {
+    urdu: "xFGi__79snw",
+    english: "EVV4h_WpcUo"
+  };
 
-      <div class="modal-header">
-        <h2 id="tutorialTitle">Driver Software Tutorial</h2>
-        <button type="button" class="close-btn" id="closeBtn">
-          ✕ Close
-        </button>
-      </div>
+  const KEY = "driverTutorialTestV4";
+  const $ = id => document.getElementById(id);
 
-      <div class="languages">
-        <button type="button" class="lang-btn active" id="urduBtn">
-          اردو
-        </button>
-        <button type="button" class="lang-btn" id="englishBtn">
-          English
-        </button>
-      </div>
+  const modal = $("modal");
+  const frame = $("frame");
+  const gesture = $("gesture");
+  const status = $("status");
+  const playPauseBtn = $("playPauseBtn");
+  const resumeBtn = $("resumeBtn");
+  const fill = $("fill");
+  const percent = $("percent");
+  const exitFullscreenBtn = $("exitFullscreenBtn");
 
-      <div class="video-frame" id="videoFrame">
-        <div id="player"></div>
-        <div class="gesture-layer" id="gestureLayer"
-             role="button" tabindex="0"
-             aria-label="Tap to play, pause, or enable sound. Double tap for fullscreen.">
-        </div>
-      </div>
+  let player = null;
+  let ready = false;
+  let language = "urdu";
+  let duration = 0;
+  let lastTap = 0;
+  let tapTimer = null;
+  let saveTimer = null;
+  let userStarted = false;
 
-      <div class="status" id="status" aria-live="polite">
-        Loading video player...
-      </div>
+  let data = {
+    positions: { urdu: 0, english: 0 },
+    completed: { urdu: false, english: false }
+  };
 
-      <div class="progress-wrap">
-        <div class="progress-label">
-          <span id="progressText">Video progress</span>
-          <span id="progressPercent">0%</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-      </div>
+  function say(message) {
+    status.textContent = message;
+  }
 
-      <div class="controls">
-        <button type="button" class="primary" id="playBtn" disabled>
-          ▶ Play / Sound
-        </button>
-        <button type="button" class="secondary" id="resumeBtn" disabled>
-          Resume
-        </button>
-        <button type="button" class="secondary" id="fullscreenBtn">
-          ⛶ Fullscreen
-        </button>
-      </div>
-
-      <p class="hint">
-        Single tap: play or pause. Double tap: fullscreen.
-        If autoplay sound is blocked by your browser, tap Play / Sound.
-      </p>
-
-    </div>
-  </section>
-
-  <script>
-    (() => {
-      "use strict";
-
-      const VIDEOS = {
-        urdu: "xFGi__79snw",
-        english: "EVV4h_WpcUo"
-      };
-
-      const STORAGE_KEY = "driverTutorialTestV3";
-
-      const modal = document.getElementById("tutorialModal");
-      const helpBtn = document.getElementById("helpBtn");
-      const closeBtn = document.getElementById("closeBtn");
-      const urduBtn = document.getElementById("urduBtn");
-      const englishBtn = document.getElementById("englishBtn");
-      const playBtn = document.getElementById("playBtn");
-      const resumeBtn = document.getElementById("resumeBtn");
-      const fullscreenBtn = document.getElementById("fullscreenBtn");
-      const gestureLayer = document.getElementById("gestureLayer");
-      const videoFrame = document.getElementById("videoFrame");
-      const status = document.getElementById("status");
-      const progressFill = document.getElementById("progressFill");
-      const progressPercent = document.getElementById("progressPercent");
-      const progressText = document.getElementById("progressText");
-
-      let player = null;
-      let ready = false;
-      let language = "urdu";
-      let duration = 0;
-      let lastTapTime = 0;
-      let singleTapTimer = null;
-      let progressTimer = null;
-      let lastSavedSecond = -1;
-      let restorePosition = 0;
-      let hasUserInteracted = false;
-
-      let data = {
-        positions: { urdu: 0, english: 0 },
-        completed: { urdu: false, english: false }
-      };
-
-      function setStatus(message) {
-        status.textContent = message;
+  function loadData() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+      if (saved.positions) {
+        data.positions.urdu = Math.max(0, Number(saved.positions.urdu) || 0);
+        data.positions.english = Math.max(0, Number(saved.positions.english) || 0);
       }
-
-      function loadData() {
-        try {
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-
-          if (saved.positions) {
-            data.positions.urdu = Math.max(0, Number(saved.positions.urdu) || 0);
-            data.positions.english = Math.max(0, Number(saved.positions.english) || 0);
-          }
-
-          if (saved.completed) {
-            data.completed.urdu = !!saved.completed.urdu;
-            data.completed.english = !!saved.completed.english;
-          }
-        } catch (error) {
-          console.warn("Could not load tutorial progress.", error);
-        }
+      if (saved.completed) {
+        data.completed.urdu = !!saved.completed.urdu;
+        data.completed.english = !!saved.completed.english;
       }
+    } catch (e) {}
+  }
 
-      function saveData() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (error) {
-          setStatus("Progress could not be saved in this browser.");
-        }
+  function saveData() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function savePosition() {
+    if (!ready || !player) return;
+    try {
+      if (player.getPlayerState() !== YT.PlayerState.ENDED) {
+        data.positions[language] = Math.floor(player.getCurrentTime() || 0);
       }
+      saveData();
+    } catch (e) {}
+  }
 
-      function updateProgress(seconds) {
-        const current = Math.max(0, Number(seconds) || 0);
-        const percent = duration > 0
-          ? Math.min(100, Math.round((current / duration) * 100))
-          : 0;
+  function updateProgress() {
+    if (!ready || !player) return;
+    try {
+      const current = player.getCurrentTime() || 0;
+      duration = player.getDuration() || duration;
+      const value = duration > 0
+        ? Math.min(100, Math.floor(current / duration * 100))
+        : 0;
+      fill.style.width = value + "%";
+      percent.textContent = value + "%";
+    } catch (e) {}
+  }
 
-        progressFill.style.width = percent + "%";
-        progressPercent.textContent = percent + "%";
-        progressText.textContent = "Video progress";
+  function updatePlayButton() {
+    if (!ready || !player) return;
+    const state = player.getPlayerState();
+    playPauseBtn.textContent =
+      state === YT.PlayerState.PLAYING ? "⏸ Pause" : "▶ Play";
+  }
+
+  function playVideo() {
+    if (!ready || !player) return;
+    userStarted = true;
+    try {
+      player.unMute();
+      player.setVolume(100);
+      player.playVideo();
+      say("Video is playing.");
+    } catch (e) {
+      say("Unable to play. Please try again.");
+    }
+  }
+
+  function pauseVideo() {
+    if (!ready || !player) return;
+    try {
+      player.pauseVideo();
+      savePosition();
+      say("Video paused.");
+    } catch (e) {}
+  }
+
+  function togglePlayPause() {
+    if (!ready || !player) {
+      say("Please wait for the video player.");
+      return;
+    }
+    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+      pauseVideo();
+    } else {
+      playVideo();
+    }
+  }
+
+  function closePopup() {
+    // Stop playback before hiding the popup.
+    if (ready && player) {
+      savePosition();
+      player.pauseVideo();
+    }
+    modal.hidden = true;
+  }
+
+  function openPopup() {
+    modal.hidden = false;
+    if (ready && player) {
+      say(data.completed[language]
+        ? "Tutorial completed before. Press Play to watch again."
+        : "Saved position: " + formatTime(data.positions[language]));
+    }
+  }
+
+  function formatTime(seconds) {
+    seconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    return Math.floor(seconds / 60) + ":" +
+      String(seconds % 60).padStart(2, "0");
+  }
+
+  function changeLanguage(next) {
+    if (next === language) return;
+    savePosition();
+    language = next;
+
+    $("urduBtn").classList.toggle("active", language === "urdu");
+    $("englishBtn").classList.toggle("active", language === "english");
+
+    if (!ready || !player) return;
+
+    const startAt = data.completed[language] ? 0 : data.positions[language];
+
+    player.loadVideoById({
+      videoId: videos[language],
+      startSeconds: startAt
+    });
+
+    say(language === "urdu" ? "اردو ویڈیو منتخب ہوگئی ہے۔" : "English video selected.");
+  }
+
+  async function enterFullscreen() {
+    try {
+      if (document.fullscreenElement) return;
+      // Fullscreen the complete video frame, including the player.
+      if (frame.requestFullscreen) {
+        await frame.requestFullscreen();
+      } else {
+        say("Fullscreen is not supported in this browser.");
       }
+    } catch (e) {
+      say("Use the Fullscreen button again, or try your browser's fullscreen control.");
+    }
+  }
 
-      function updateLanguageButtons() {
-        urduBtn.classList.toggle("active", language === "urdu");
-        englishBtn.classList.toggle("active", language === "english");
+  async function exitFullscreen() {
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen();
       }
+    } catch (e) {}
+  }
 
-      function enableSoundAndPlay() {
-        if (!ready || !player) {
-          setStatus("Please wait for the video player to load.");
-          return;
-        }
+  function syncFullscreenButton() {
+    exitFullscreenBtn.classList.toggle(
+      "visible",
+      !!document.fullscreenElement
+    );
+  }
 
-        hasUserInteracted = true;
+  function handleTap() {
+    const now = Date.now();
 
-        try {
-          player.unMute();
-          player.setVolume(100);
-          player.playVideo();
-          setStatus("Playing video with sound.");
-        } catch (error) {
-          setStatus("Could not start video. Please try again.");
-        }
-      }
+    if (now - lastTap < 320) {
+      clearTimeout(tapTimer);
+      tapTimer = null;
+      lastTap = 0;
+      enterFullscreen();
+      return;
+    }
 
-      function togglePlayback() {
-        if (!ready || !player) return;
+    lastTap = now;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => {
+      tapTimer = null;
+      togglePlayPause();
+    }, 330);
+  }
 
-        hasUserInteracted = true;
+  window.onYouTubeIframeAPIReady = function() {
+    player = new YT.Player("player", {
+      videoId: videos[language],
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        playsinline: 1,
+        enablejsapi: 1,
+        rel: 0,
+        origin: location.origin,
+        start: Math.floor(data.positions[language] || 0)
+      },
+      events: {
+        onReady: function() {
+          ready = true;
+          playPauseBtn.disabled = false;
+          resumeBtn.disabled = false;
 
-        try {
-          if (player.isMuted()) {
-            player.unMute();
-            player.setVolume(100);
-            player.playVideo();
-            setStatus("Sound enabled. Video is playing.");
-            return;
-          }
-
-          const state = player.getPlayerState();
-
-          if (state === YT.PlayerState.PLAYING) {
-            player.pauseVideo();
-          } else {
-            player.unMute();
-            player.setVolume(100);
-            player.playVideo();
-          }
-        } catch (error) {
-          setStatus("Playback control failed. Use Play / Sound.");
-        }
-      }
-
-      function saveCurrentPosition() {
-        if (!ready || !player) return;
-
-        try {
-          const state = player.getPlayerState();
-          const current = Math.floor(player.getCurrentTime() || 0);
-
-          if (state === YT.PlayerState.ENDED) {
-            data.positions[language] = 0;
-          } else if (current >= 0) {
-            data.positions[language] = current;
-          }
-
-          saveData();
-        } catch (error) {
-          console.warn("Could not save current position.", error);
-        }
-      }
-
-      function changeLanguage(nextLanguage) {
-        if (nextLanguage === language) return;
-
-        saveCurrentPosition();
-
-        language = nextLanguage;
-        restorePosition = data.completed[language]
-          ? 0
-          : data.positions[language];
-
-        updateLanguageButtons();
-        updateProgress(restorePosition);
-
-        if (!ready || !player) return;
-
-        player.loadVideoById({
-          videoId: VIDEOS[language],
-          startSeconds: restorePosition
-        });
-
-        // Attempt to enable sound; a user gesture may still be required.
-        if (hasUserInteracted) {
-          player.unMute();
-          player.setVolume(100);
-        }
-
-        setStatus(
-          language === "urdu"
-            ? "اردو ویڈیو منتخب ہوگئی ہے۔"
-            : "English video selected."
-        );
-      }
-
-      function openTutorial() {
-        modal.hidden = false;
-
-        if (ready && player) {
-          setStatus(
-            "Status: " +
-            (data.completed[language]
-              ? "Completed previously. You can replay the video."
-              : "Resume position: " + formatTime(data.positions[language]))
-          );
-        }
-
-        // Do not force playback from Help if the video is already playing.
-      }
-
-      function closeTutorial() {
-        saveCurrentPosition();
-        modal.hidden = true;
-      }
-
-      function formatTime(seconds) {
-        const total = Math.max(0, Math.floor(Number(seconds) || 0));
-        const minutes = Math.floor(total / 60);
-        const secs = total % 60;
-        return minutes + ":" + String(secs).padStart(2, "0");
-      }
-
-      function enterFullscreen() {
-        if (!ready || !player) return;
-
-        const iframe = player.getIframe();
-
-        try {
-          if (iframe.requestFullscreen) {
-            iframe.requestFullscreen();
-          } else if (videoFrame.requestFullscreen) {
-            videoFrame.requestFullscreen();
-          } else if (iframe.webkitRequestFullscreen) {
-            iframe.webkitRequestFullscreen();
-          } else {
-            setStatus("Fullscreen is not supported by this browser.");
-          }
-        } catch (error) {
-          setStatus("Tap the fullscreen button again to allow fullscreen.");
-        }
-      }
-
-      function handleTap() {
-        const now = Date.now();
-
-        if (now - lastTapTime < 300) {
-          clearTimeout(singleTapTimer);
-          singleTapTimer = null;
-          lastTapTime = 0;
-          enterFullscreen();
-          return;
-        }
-
-        lastTapTime = now;
-
-        singleTapTimer = setTimeout(() => {
-          singleTapTimer = null;
-          togglePlayback();
-        }, 280);
-      }
-
-      function startProgressSaving() {
-        if (progressTimer) clearInterval(progressTimer);
-
-        progressTimer = setInterval(() => {
-          if (!ready || !player || modal.hidden) return;
-
+          // Muted autoplay is generally allowed by mobile browsers.
           try {
-            const current = Math.floor(player.getCurrentTime() || 0);
-            duration = player.getDuration() || duration;
-            updateProgress(current);
+            player.mute();
+            player.playVideo();
+          } catch (e) {}
 
-            // Save every 3 seconds to reduce lost progress on refresh.
-            if (current !== lastSavedSecond && current % 3 === 0) {
-              lastSavedSecond = current;
-              saveCurrentPosition();
+          say("Video ready. Press Play to enable sound.");
+          updatePlayButton();
+
+          saveTimer = setInterval(() => {
+            if (!modal.hidden) {
+              savePosition();
+              updateProgress();
+              updatePlayButton();
             }
-          } catch (error) {
-            // Player may still be loading.
+          }, 1000);
+        },
+
+        onStateChange: function(event) {
+          if (event.data === YT.PlayerState.PLAYING) {
+            say(player.isMuted()
+              ? "Playing silently. Press Play to enable sound."
+              : "Video playing with sound.");
           }
-        }, 1000);
+
+          if (event.data === YT.PlayerState.PAUSED) {
+            savePosition();
+            say("Video paused.");
+          }
+
+          if (event.data === YT.PlayerState.ENDED) {
+            data.completed[language] = true;
+            data.positions[language] = 0;
+            saveData();
+            fill.style.width = "100%";
+            percent.textContent = "100%";
+            say("Tutorial completed.");
+            setTimeout(closePopup, 1000);
+          }
+
+          updatePlayButton();
+        },
+
+        onError: function(event) {
+          const errors = {
+            2: "Invalid video ID.",
+            5: "Video could not play in the embedded player.",
+            100: "Video unavailable.",
+            101: "The owner does not allow embedded playback.",
+            150: "The owner does not allow embedded playback.",
+            153: "YouTube could not verify the embedded request. Try using the website's normal address."
+          };
+          say(errors[event.data] || "Video error: " + event.data);
+        }
       }
+    });
+  };
 
-      window.onYouTubeIframeAPIReady = function () {
-        player = new YT.Player("player", {
-          videoId: VIDEOS[language],
-          playerVars: {
-            autoplay: 1,
-            controls: 0,
-            playsinline: 1,
-            enablejsapi: 1,
-            rel: 0,
-            origin: window.location.origin,
-            start: Math.floor(restorePosition)
-          },
-          events: {
-            onReady: function () {
-              ready = true;
-              playBtn.disabled = false;
-              resumeBtn.disabled = false;
+  const api = document.createElement("script");
+  api.src = "https://www.youtube.com/iframe_api";
+  api.async = true;
+  document.head.appendChild(api);
 
-              try {
-                player.setVolume(100);
+  $("helpBtn").addEventListener("click", openPopup);
+  $("closeBtn").addEventListener("click", closePopup);
+  playPauseBtn.addEventListener("click", togglePlayPause);
 
-                // Muted autoplay is more likely to be permitted by browsers.
-                player.mute();
-                player.playVideo();
-              } catch (error) {
-                setStatus("Press Play / Sound to start the video.");
-              }
+  resumeBtn.addEventListener("click", () => {
+    if (!ready || !player) return;
+    const startAt = data.completed[language] ? 0 : data.positions[language];
+    player.seekTo(startAt, true);
+    playVideo();
+  });
 
-              setStatus(
-                "Video loaded. If it does not start, press Play / Sound."
-              );
+  $("fullscreenBtn").addEventListener("click", enterFullscreen);
+  exitFullscreenBtn.addEventListener("click", exitFullscreen);
 
-              startProgressSaving();
-            },
+  $("urduBtn").addEventListener("click", () => changeLanguage("urdu"));
+  $("englishBtn").addEventListener("click", () => changeLanguage("english"));
 
-            onStateChange: function (event) {
-              if (!ready || !player) return;
+  gesture.addEventListener("pointerup", event => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    handleTap();
+  });
 
-              if (event.data === YT.PlayerState.PLAYING) {
-                duration = player.getDuration() || duration;
-                setStatus(
-                  player.isMuted()
-                    ? "Video playing. Tap Play / Sound to enable audio."
-                    : "Video playing with sound."
-                );
-              }
+  gesture.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      togglePlayPause();
+    }
+  });
 
-              if (event.data === YT.PlayerState.PAUSED) {
-                saveCurrentPosition();
-                setStatus("Video paused. Tap the video to continue.");
-              }
+  document.addEventListener("fullscreenchange", syncFullscreenButton);
 
-              if (event.data === YT.PlayerState.ENDED) {
-                data.completed[language] = true;
-                data.positions[language] = 0;
-                saveData();
-                updateProgress(duration);
-                setStatus("Tutorial completed. Use Help to watch again.");
+  window.addEventListener("pagehide", savePosition);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") savePosition();
+  });
 
-                setTimeout(() => {
-                  modal.hidden = true;
-                }, 1200);
-              }
-            },
-
-            onError: function (event) {
-              const messages = {
-                2: "Invalid YouTube video ID.",
-                5: "YouTube could not play this video in the embedded player.",
-                100: "Video unavailable or removed.",
-                101: "The owner does not allow embedded playback.",
-                150: "The owner does not allow embedded playback.",
-                153: "YouTube could not verify this embedded request. Open the page through its normal website address and try again."
-              };
-
-              setStatus(messages[event.data] || "Video playback error: " + event.data);
-            }
-          }
-        });
-      };
-
-      // Load YouTube IFrame Player API.
-      const apiScript = document.createElement("script");
-      apiScript.src = "https://www.youtube.com/iframe_api";
-      apiScript.async = true;
-      document.head.appendChild(apiScript);
-
-      helpBtn.addEventListener("click", openTutorial);
-      closeBtn.addEventListener("click", closeTutorial);
-
-      urduBtn.addEventListener("click", () => changeLanguage("urdu"));
-      englishBtn.addEventListener("click", () => changeLanguage("english"));
-
-      playBtn.addEventListener("click", enableSoundAndPlay);
-
-      resumeBtn.addEventListener("click", () => {
-        if (!ready || !player) return;
-
-        const position = data.completed[language]
-          ? 0
-          : data.positions[language];
-
-        player.seekTo(position, true);
-        enableSoundAndPlay();
-      });
-
-      fullscreenBtn.addEventListener("click", enterFullscreen);
-
-      gestureLayer.addEventListener("pointerup", event => {
-        if (event.pointerType === "mouse" && event.button !== 0) return;
-        event.preventDefault();
-        handleTap();
-      });
-
-      gestureLayer.addEventListener("keydown", event => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          togglePlayback();
-        }
-      });
-
-      // Save position immediately before a page refresh or navigation.
-      window.addEventListener("pagehide", saveCurrentPosition);
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
-          saveCurrentPosition();
-        }
-      });
-
-      loadData();
-      restorePosition = data.completed[language]
-        ? 0
-        : data.positions[language];
-
-      updateLanguageButtons();
-      updateProgress(restorePosition);
-
-      // Required behaviour: popup opens on every page refresh.
-      modal.hidden = false;
-    })();
-  </script>
-
+  loadData();
+  modal.hidden = false;
+})();
+</script>
 </body>
 </html>

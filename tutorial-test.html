@@ -2,458 +2,577 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Driver Dashboard Tutorial</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Driver Tutorial</title>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f6fa;
-      color: #172033;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f6fa;
+  color: #172033;
+}
 
-    .dashboard {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px;
-    }
+.dashboard {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
-    }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
 
-    .card {
-      background: white;
-      padding: 22px;
-      border-radius: 12px;
-      box-shadow: 0 3px 12px #0000000c;
-    }
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #0000000c;
+}
 
-    .tutorial-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(16, 24, 39, .94);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(16, 24, 39, .95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
 
-    .tutorial-box {
-      width: min(900px, 100%);
-      background: white;
-      border-radius: 14px;
-      overflow: hidden;
-    }
+.tutorial-box {
+  width: min(900px, 100%);
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+}
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid #e5e7eb;
-    }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
 
-    .topbar h2 {
-      margin: 0;
-      font-size: 19px;
-    }
+.topbar h2 {
+  margin: 0;
+  font-size: 19px;
+}
 
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-    button {
-      border: 0;
-      border-radius: 7px;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+button {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    .lang-btn {
-      background: #e8edf5;
-      color: #172033;
-    }
+.lang-btn {
+  background: #e8edf5;
+  color: #172033;
+}
 
-    .lang-btn.active {
-      background: #1769e0;
-      color: white;
-    }
+.lang-btn.active {
+  background: #1769e0;
+  color: white;
+}
 
-    .close-btn {
-      background: #fee2e2;
-      color: #991b1b;
-    }
+.close-btn {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
-    .video-area {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-    }
+.video-area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+}
 
-    #player {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
+#player,
+.video-area iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
 
-    /* Keep the video filling the screen when the container is fullscreen. */
-    .video-area:fullscreen {
-      width: 100vw;
-      height: 100vh;
-      aspect-ratio: auto;
-      background: #000;
-    }
+/* Our custom click layer sits above the YouTube iframe. */
+#interactionLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
 
-    .video-area:fullscreen #player {
-      width: 100%;
-      height: 100%;
-    }
+#fullscreenBtn {
+  position: absolute;
+  z-index: 4;
+  right: 12px;
+  bottom: 12px;
+  background: rgba(0, 0, 0, .8);
+  color: white;
+}
 
-    .bottom {
-      padding: 16px 18px;
-    }
+.video-area:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  background: #000;
+}
 
-    .progress-track {
-      height: 7px;
-      background: #e5e7eb;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 12px 0;
-    }
+.video-area:fullscreen #player,
+.video-area:fullscreen iframe {
+  width: 100%;
+  height: 100%;
+}
 
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: #1769e0;
-      transition: width .2s;
-    }
+.bottom {
+  padding: 16px 18px;
+}
 
-    .small-text {
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.5;
-    }
+.progress-track {
+  height: 7px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 12px 0;
+}
 
-    #resumeBtn {
-      display: none;
-      margin-top: 20px;
-      background: #1769e0;
-      color: white;
-    }
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: #1769e0;
+  transition: width .2s;
+}
 
-    @media (max-width: 500px) {
-      .dashboard { padding: 16px; }
-      .topbar { align-items: flex-start; }
-      .topbar h2 { width: 100%; }
-    }
-  </style>
+.small-text {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#resumeBtn {
+  display: none;
+  margin-top: 20px;
+  background: #1769e0;
+  color: white;
+}
+
+@media (max-width: 500px) {
+  .dashboard { padding: 16px; }
+  .topbar h2 { width: 100%; }
+}
+</style>
 </head>
 
 <body>
-  <main class="dashboard">
-    <h1>Driver Dashboard</h1>
-    <p>Manage your earnings, targets, invoices and reports.</p>
 
-    <div class="cards">
-      <div class="card">
-        <h3>New Invoice</h3>
-        <p>Create a new invoice.</p>
+<main class="dashboard">
+  <h1>Driver Dashboard</h1>
+  <p>Manage your earnings, targets, invoices and reports.</p>
+
+  <div class="cards">
+    <div class="card">
+      <h3>New Invoice</h3>
+      <p>Create a new invoice.</p>
+    </div>
+    <div class="card">
+      <h3>Target Setup</h3>
+      <p>Manage your earning target.</p>
+    </div>
+    <div class="card">
+      <h3>Charge Setup</h3>
+      <p>Manage your charges.</p>
+    </div>
+    <div class="card">
+      <h3>Reports</h3>
+      <p>Review your records.</p>
+    </div>
+  </div>
+
+  <button id="resumeBtn">Continue Tutorial</button>
+</main>
+
+<div class="overlay" id="tutorialOverlay">
+  <section class="tutorial-box">
+
+    <header class="topbar">
+      <h2 id="tutorialTitle">Driver Software Tutorial</h2>
+
+      <div class="buttons">
+        <button class="lang-btn active" id="urduBtn">اردو</button>
+        <button class="lang-btn" id="englishBtn">English</button>
+        <button class="close-btn" id="closeBtn">Close</button>
       </div>
-      <div class="card">
-        <h3>Target Setup</h3>
-        <p>Manage your earning target.</p>
+    </header>
+
+    <div class="video-area" id="videoArea">
+      <div id="player"></div>
+
+      <button
+        id="interactionLayer"
+        type="button"
+        aria-label="Click once to play or pause. Double-click for fullscreen">
+      </button>
+
+      <button id="fullscreenBtn" type="button">
+        ⛶ Full Screen
+      </button>
+    </div>
+
+    <div class="bottom">
+      <div id="progressText">Tutorial progress: 0%</div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
-      <div class="card">
-        <h3>Charge Setup</h3>
-        <p>Manage your charges.</p>
-      </div>
-      <div class="card">
-        <h3>Reports</h3>
-        <p>Review your records.</p>
+
+      <div class="small-text" id="statusText">
+        Click once to play or pause. Double-click for fullscreen.
+        Progress is saved in this browser.
       </div>
     </div>
 
-    <button id="resumeBtn">Continue Tutorial</button>
-  </main>
+  </section>
+</div>
 
-  <div class="tutorial-overlay" id="tutorialOverlay">
-    <section class="tutorial-box" id="tutorialBox">
-      <header class="topbar">
-        <h2 id="tutorialTitle">Driver Software Tutorial</h2>
+<script>
+"use strict";
 
-        <div class="buttons">
-          <button class="lang-btn active" id="urduBtn">اردو</button>
-          <button class="lang-btn" id="englishBtn">English</button>
-          <button class="close-btn" id="closeBtn">Close</button>
-        </div>
-      </header>
+/* Actual tutorial video IDs */
+const VIDEO_IDS = {
+  urdu: "xFGi__79snw",
+  english: "EVV4h_WpcUo"
+};
 
-      <div class="video-area" id="videoArea">
-        <div id="player"></div>
-      </div>
+let currentLanguage = "urdu";
+let player = null;
+let playerReady = false;
+let switchingLanguage = false;
+let clickTimer = null;
+let progressTimer = null;
+let saveTimer = null;
+let switchingUntil = 0;
 
-      <div class="bottom">
-        <div id="progressText">Tutorial progress: 0%</div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="small-text" id="statusText">
-          Your progress is saved automatically on this browser.
-          Use YouTube's player controls for fullscreen.
-        </div>
-      </div>
-    </section>
-  </div>
+const overlay = document.getElementById("tutorialOverlay");
+const videoArea = document.getElementById("videoArea");
+const interactionLayer = document.getElementById("interactionLayer");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const resumeBtn = document.getElementById("resumeBtn");
+const progressText = document.getElementById("progressText");
+const progressFill = document.getElementById("progressFill");
+const statusText = document.getElementById("statusText");
+const tutorialTitle = document.getElementById("tutorialTitle");
 
-  <script>
-    // Testing: both language buttons use the same video.
-    // Replace ENGLISH_VIDEO_ID when the English tutorial is ready.
-    const URDU_VIDEO_ID = "xFGi__79snw";
-    const ENGLISH_VIDEO_ID = "xFGi__79snw";
+function positionKey(language) {
+  return "driver_tutorial_" + language + "_position";
+}
 
-    let currentLanguage = "urdu";
-    let player = null;
-    let playerReady = false;
-    let progressTimer = null;
-    let saveTimer = null;
-    let switchingLanguage = false;
+function completedKey(language) {
+  return "driver_tutorial_" + language + "_completed";
+}
 
-    const overlay = document.getElementById("tutorialOverlay");
-    const resumeBtn = document.getElementById("resumeBtn");
-    const progressText = document.getElementById("progressText");
-    const progressFill = document.getElementById("progressFill");
-    const statusText = document.getElementById("statusText");
-    const tutorialTitle = document.getElementById("tutorialTitle");
+function isCompleted(language) {
+  return localStorage.getItem(completedKey(language)) === "true";
+}
 
-    function positionKey(language) {
-      return "driver_tutorial_" + language + "_position";
-    }
+function getSavedPosition(language) {
+  return Number(localStorage.getItem(positionKey(language)) || 0);
+}
 
-    function completeKey(language) {
-      return "driver_tutorial_" + language + "_complete";
-    }
+function updateLanguageUI() {
+  document.getElementById("urduBtn").classList.toggle(
+    "active", currentLanguage === "urdu"
+  );
 
-    function getVideoId(language) {
-      return language === "english"
-        ? ENGLISH_VIDEO_ID
-        : URDU_VIDEO_ID;
-    }
+  document.getElementById("englishBtn").classList.toggle(
+    "active", currentLanguage === "english"
+  );
 
-    function getSavedPosition(language) {
-      return Number(localStorage.getItem(positionKey(language)) || 0);
-    }
+  tutorialTitle.textContent =
+    currentLanguage === "english"
+      ? "English Tutorial"
+      : "اردو ٹیوٹوریل";
+}
 
-    function updateLanguageUI() {
-      document.getElementById("urduBtn").classList.toggle(
-        "active", currentLanguage === "urdu"
+function savePosition() {
+  if (!playerReady || !player || switchingLanguage) return;
+
+  try {
+    const time = player.getCurrentTime();
+
+    if (Number.isFinite(time) && time >= 0) {
+      localStorage.setItem(
+        positionKey(currentLanguage),
+        String(time)
       );
-
-      document.getElementById("englishBtn").classList.toggle(
-        "active", currentLanguage === "english"
-      );
-
-      tutorialTitle.textContent = currentLanguage === "english"
-        ? "English Tutorial"
-        : "اردو ٹیوٹوریل";
     }
+  } catch (error) {}
+}
 
-    function savePosition() {
-      if (!playerReady || !player || switchingLanguage) return;
+function updateProgress() {
+  if (!playerReady || !player) return;
 
-      try {
-        const currentTime = player.getCurrentTime();
-        if (Number.isFinite(currentTime) && currentTime >= 0) {
-          localStorage.setItem(
-            positionKey(currentLanguage),
-            String(currentTime)
-          );
-        }
-      } catch (error) {
-        // Storage may be unavailable in some browser contexts.
-      }
+  try {
+    const duration = player.getDuration();
+    const time = player.getCurrentTime();
+
+    if (duration > 0) {
+      const percent = Math.min(100, Math.max(0, time / duration * 100));
+
+      progressFill.style.width = percent + "%";
+      progressText.textContent =
+        "Tutorial progress: " + Math.floor(percent) + "%";
     }
+  } catch (error) {}
+}
 
-    function updateProgress() {
-      if (!playerReady || !player) return;
+/* One click = play/pause. Double-click = fullscreen. */
+interactionLayer.addEventListener("click", function(event) {
+  event.preventDefault();
 
-      try {
-        const duration = player.getDuration();
-        const currentTime = player.getCurrentTime();
+  if (clickTimer !== null) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+    toggleFullscreen();
+    return;
+  }
 
-        if (duration > 0) {
-          const percent = Math.min(
-            100, Math.max(0, currentTime / duration * 100)
-          );
+  clickTimer = setTimeout(function() {
+    clickTimer = null;
 
-          progressFill.style.width = percent + "%";
-          progressText.textContent =
-            "Tutorial progress: " + Math.floor(percent) + "%";
-        }
-      } catch (error) {}
-    }
+    if (!playerReady || !player) return;
 
-    function switchLanguage(language) {
-      if (!playerReady || language === currentLanguage) return;
+    try {
+      const state = player.getPlayerState();
 
-      const oldLanguage = currentLanguage;
-      let currentTime = 0;
-
-      try {
-        currentTime = player.getCurrentTime() || 0;
-        localStorage.setItem(positionKey(oldLanguage), String(currentTime));
-      } catch (error) {}
-
-      currentLanguage = language;
-      updateLanguageUI();
-
-      switchingLanguage = true;
-
-      try {
-        player.loadVideoById({
-          videoId: getVideoId(language),
-          startSeconds: currentTime
-        });
-
-        player.mute();
-        statusText.textContent =
-          "Switching tutorial language and restoring playback position...";
-      } catch (error) {
-        statusText.textContent = "Unable to switch tutorial language.";
-      }
-
-      setTimeout(() => {
-        switchingLanguage = false;
-        updateProgress();
-        statusText.textContent =
-          "Your progress is saved automatically on this browser.";
-      }, 1500);
-    }
-
-    document.getElementById("urduBtn").addEventListener("click", () => {
-      switchLanguage("urdu");
-    });
-
-    document.getElementById("englishBtn").addEventListener("click", () => {
-      switchLanguage("english");
-    });
-
-    document.getElementById("closeBtn").addEventListener("click", () => {
-      savePosition();
-
-      if (playerReady && player) {
+      if (state === YT.PlayerState.PLAYING) {
         player.pauseVideo();
-      }
-
-      overlay.style.display = "none";
-      resumeBtn.style.display = "inline-block";
-    });
-
-    resumeBtn.addEventListener("click", () => {
-      overlay.style.display = "flex";
-      resumeBtn.style.display = "none";
-
-      if (playerReady && player) {
+      } else {
         player.playVideo();
       }
+    } catch (error) {}
+  }, 260);
+});
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else if (videoArea.requestFullscreen) {
+      await videoArea.requestFullscreen();
+    } else {
+      statusText.textContent =
+        "Fullscreen is not supported by this browser.";
+    }
+  } catch (error) {
+    statusText.textContent =
+      "Please try the Full Screen button again.";
+  }
+}
+
+fullscreenBtn.addEventListener("click", function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (clickTimer !== null) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
+
+  toggleFullscreen();
+});
+
+async function switchLanguage(nextLanguage) {
+  if (!playerReady || !player || nextLanguage === currentLanguage) return;
+
+  let currentTime = 0;
+
+  try {
+    currentTime = player.getCurrentTime() || 0;
+
+    localStorage.setItem(
+      positionKey(currentLanguage),
+      String(currentTime)
+    );
+  } catch (error) {}
+
+  currentLanguage = nextLanguage;
+  updateLanguageUI();
+
+  switchingLanguage = true;
+  switchingUntil = Date.now() + 2500;
+
+  statusText.textContent = "Switching tutorial language...";
+
+  try {
+    // Keep the same approximate scene/time when changing language.
+    // Save that position for the target language too.
+    localStorage.setItem(
+      positionKey(nextLanguage),
+      String(currentTime)
+    );
+
+    player.loadVideoById({
+      videoId: VIDEO_IDS[nextLanguage],
+      startSeconds: currentTime
     });
 
-    // Load YouTube's official IFrame API.
-    const youtubeScript = document.createElement("script");
-    youtubeScript.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(youtubeScript);
+    player.mute();
+  } catch (error) {
+    statusText.textContent = "Unable to switch tutorial.";
+  }
 
-    window.onYouTubeIframeAPIReady = function () {
-      player = new YT.Player("player", {
-        videoId: URDU_VIDEO_ID,
-        playerVars: {
-          autoplay: 1,
-          playsinline: 1,
-          controls: 1,
-          rel: 0,
-          enablejsapi: 1,
-          origin: location.protocol.startsWith("http")
-            ? location.origin
-            : undefined
-        },
-        events: {
-          onReady: function (event) {
-            playerReady = true;
+  setTimeout(function() {
+    switchingLanguage = false;
+    updateProgress();
 
-            const savedPosition = getSavedPosition(currentLanguage);
+    statusText.textContent =
+      "Progress is saved automatically in this browser.";
+  }, 2500);
+}
 
-            if (savedPosition > 0) {
-              event.target.seekTo(savedPosition, true);
-            }
+document.getElementById("urduBtn").addEventListener("click", function() {
+  switchLanguage("urdu");
+});
 
-            // Muted autoplay is more likely to be allowed by browsers.
-            event.target.mute();
-            event.target.playVideo();
+document.getElementById("englishBtn").addEventListener("click", function() {
+  switchLanguage("english");
+});
 
-            progressTimer = setInterval(updateProgress, 1000);
-            saveTimer = setInterval(savePosition, 2000);
+document.getElementById("closeBtn").addEventListener("click", function() {
+  savePosition();
 
-            updateLanguageUI();
-            updateProgress();
-          },
+  if (playerReady && player) {
+    player.pauseVideo();
+  }
 
-          onStateChange: function (event) {
-            updateProgress();
+  overlay.style.display = "none";
+  resumeBtn.style.display = "inline-block";
+});
 
-            if (event.data === YT.PlayerState.ENDED) {
-              localStorage.setItem(completeKey(currentLanguage), "true");
-              localStorage.removeItem(positionKey(currentLanguage));
+resumeBtn.addEventListener("click", function() {
+  overlay.style.display = "flex";
+  resumeBtn.style.display = "none";
 
-              progressFill.style.width = "100%";
-              progressText.textContent = "Tutorial progress: 100%";
-              statusText.textContent = "Tutorial completed.";
+  if (playerReady && player) {
+    player.playVideo();
+  }
+});
 
-              overlay.style.display = "none";
-              resumeBtn.style.display = "none";
-            } else if (event.data === YT.PlayerState.PLAYING) {
-              statusText.textContent =
-                "Your progress is saved automatically on this browser.";
-            }
-          },
+/* YouTube IFrame Player API */
+const youtubeScript = document.createElement("script");
+youtubeScript.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(youtubeScript);
 
-          onError: function () {
-            statusText.textContent =
-              "Unable to load video. Check the video's embedding settings.";
+window.onYouTubeIframeAPIReady = function() {
+  // Start with the first language not yet completed.
+  if (isCompleted("urdu") && !isCompleted("english")) {
+    currentLanguage = "english";
+  } else {
+    currentLanguage = "urdu";
+  }
+
+  updateLanguageUI();
+
+  player = new YT.Player("player", {
+    videoId: VIDEO_IDS[currentLanguage],
+
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      disablekb: 1,
+      fs: 0,
+      playsinline: 1,
+      rel: 0,
+      enablejsapi: 1,
+      origin: /^https?:$/.test(location.protocol)
+        ? location.origin
+        : undefined
+    },
+
+    events: {
+      onReady: function(event) {
+        playerReady = true;
+
+        const savedTime = getSavedPosition(currentLanguage);
+
+        if (savedTime > 0) {
+          event.target.seekTo(savedTime, true);
+        }
+
+        // Muted autoplay is more likely to be permitted by browsers.
+        event.target.mute();
+        event.target.playVideo();
+
+        progressTimer = setInterval(updateProgress, 1000);
+        saveTimer = setInterval(savePosition, 2000);
+
+        updateLanguageUI();
+        updateProgress();
+      },
+
+      onStateChange: function(event) {
+        updateProgress();
+
+        if (event.data === YT.PlayerState.PLAYING) {
+          statusText.textContent =
+            "Click once to pause. Double-click for fullscreen.";
+        }
+
+        if (event.data === YT.PlayerState.ENDED) {
+          localStorage.setItem(completedKey(currentLanguage), "true");
+          localStorage.removeItem(positionKey(currentLanguage));
+
+          progressFill.style.width = "100%";
+          progressText.textContent = "Tutorial progress: 100%";
+          statusText.textContent =
+            currentLanguage === "urdu"
+              ? "Urdu tutorial completed. You can test English too."
+              : "English tutorial completed.";
+
+          // For this demo, hide the tutorial only when BOTH
+          // language versions have been completed.
+          if (isCompleted("urdu") && isCompleted("english")) {
+            overlay.style.display = "none";
+            resumeBtn.style.display = "none";
           }
         }
-      });
-    };
+      },
 
-    // Demo behavior: hide the tutorial only after both demo languages
-    // have been marked complete. Each language keeps its own progress.
-    window.addEventListener("load", function () {
-      const urduCompleted =
-        localStorage.getItem(completeKey("urdu")) === "true";
-
-      const englishCompleted =
-        localStorage.getItem(completeKey("english")) === "true";
-
-      if (urduCompleted && englishCompleted) {
-        overlay.style.display = "none";
+      onError: function() {
+        statusText.textContent =
+          "Video could not load. Check YouTube embedding settings.";
       }
-    });
+    }
+  });
+};
 
-    window.addEventListener("beforeunload", savePosition);
-  </script>
+window.addEventListener("beforeunload", savePosition);
+</script>
+
 </body>
 </html>

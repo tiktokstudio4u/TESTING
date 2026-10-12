@@ -110,8 +110,18 @@ button{
   pointer-events:none;
 }
 .videoControls button{pointer-events:auto}
-.fullBtn{background:#ffffffed;color:#111;font-weight:bold}
-.soundBtn{background:#e8bd62;color:#172b24;font-weight:bold}
+.fullBtn{
+  background:#ffffffed;
+  color:#111;
+  font-size:24px;
+  font-weight:bold;
+  width:44px;
+  height:44px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 .fullExitBtn{
   display:none;
   position:absolute;
@@ -159,11 +169,11 @@ button{
   width:0%;
   background:#d5a943;
 }
-.note{font-size:12px;color:#6b7280;margin-top:10px}
 @media(max-width:500px){
   .tutorial{padding:10px}
   .modalTop{align-items:flex-start}
   button{padding:9px 11px}
+  .fullBtn{padding:0;width:44px;height:44px}
 }
 </style>
 </head>
@@ -201,8 +211,9 @@ button{
       <div class="gestureLayer" id="gestureLayer"></div>
 
       <div class="videoControls">
-        <button class="soundBtn" id="soundBtn">🔊 آواز آن کریں</button>
-        <button class="fullBtn" id="fullBtn">⛶ Full Screen</button>
+        <span></span>
+        <button class="fullBtn" id="fullBtn"
+          aria-label="Full Screen" title="Full Screen">⛶</button>
       </div>
 
       <button class="fullExitBtn" id="fullExitBtn">
@@ -218,11 +229,6 @@ button{
     <div class="actions" style="margin-top:14px">
       <button id="playPauseBtn">▶ Play</button>
       <button class="secondary" id="resumeBtn">Resume</button>
-    </div>
-
-    <div class="note">
-      نوٹ: موبائل براؤزر آٹو پلے پر آواز روک سکتا ہے۔ ایسی صورت میں
-      “آواز آن کریں” بٹن ایک بار دبائیں۔
     </div>
   </section>
 </div>
@@ -244,7 +250,6 @@ const playPauseBtn = document.getElementById("playPauseBtn");
 const resumeBtn = document.getElementById("resumeBtn");
 const fullBtn = document.getElementById("fullBtn");
 const fullExitBtn = document.getElementById("fullExitBtn");
-const soundBtn = document.getElementById("soundBtn");
 const videoStage = document.getElementById("videoStage");
 const gestureLayer = document.getElementById("gestureLayer");
 const statusBox = document.getElementById("status");
@@ -302,13 +307,6 @@ function showStatus(message){
 
 function openPopup(){
   modal.classList.add("open");
-
-  if(playerReady && player){
-    const state = player.getPlayerState();
-    if(state === YT.PlayerState.PAUSED || state === YT.PlayerState.CUED){
-      player.playVideo();
-    }
-  }
 }
 
 function closePopup(){
@@ -390,20 +388,6 @@ function formatTime(value){
   return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
 }
 
-function playWithSound(){
-  if(!playerReady || !player) return;
-
-  try{
-    player.unMute();
-    player.setVolume(100);
-    player.playVideo();
-    soundBtn.textContent = "🔊 آواز آن ہے";
-    showStatus("ویڈیو چل رہی ہے۔");
-  }catch(e){
-    showStatus("ویڈیو پر دوبارہ Play دبائیں۔");
-  }
-}
-
 function togglePlayPause(){
   if(!playerReady || !player) return;
 
@@ -438,9 +422,6 @@ function switchLanguage(language){
       videoId: VIDEOS[currentLanguage],
       startSeconds: savedPosition()
     });
-    player.mute();
-    player.playVideo();
-    soundBtn.textContent = "🔊 آواز آن کریں";
   }
 }
 
@@ -482,21 +463,22 @@ function toggleFullscreen(){
 helpBtn.addEventListener("click",openPopup);
 closeBtn.addEventListener("click",closePopup);
 playPauseBtn.addEventListener("click",togglePlayPause);
+
 resumeBtn.addEventListener("click",()=>{
   if(!playerReady || !player) return;
   player.seekTo(savedPosition(),true);
-  playWithSound();
+  player.unMute();
+  player.setVolume(100);
+  player.playVideo();
 });
-soundBtn.addEventListener("click",playWithSound);
+
 fullBtn.addEventListener("click",toggleFullscreen);
 fullExitBtn.addEventListener("click",exitFullscreen);
 urduBtn.addEventListener("click",()=>switchLanguage("urdu"));
 englishBtn.addEventListener("click",()=>switchLanguage("english"));
 
 document.addEventListener("fullscreenchange",()=>{
-  fullBtn.textContent = document.fullscreenElement === videoStage
-    ? "⛶ Exit Full Screen"
-    : "⛶ Full Screen";
+  fullBtn.textContent = "⛶";
 });
 
 document.addEventListener("visibilitychange",()=>{
@@ -537,7 +519,7 @@ window.onYouTubeIframeAPIReady = function(){
     height:"100%",
     videoId: VIDEOS[currentLanguage],
     playerVars:{
-      autoplay:1,
+      autoplay:0,
       controls:0,
       playsinline:1,
       rel:0,
@@ -548,14 +530,12 @@ window.onYouTubeIframeAPIReady = function(){
     events:{
       onReady:function(event){
         playerReady = true;
-
-        /* Muted autoplay is more reliable on phones. */
-        event.target.mute();
-        event.target.playVideo();
+        event.target.pauseVideo();
+        event.target.seekTo(savedPosition(),true);
 
         updateLanguageButtons();
         startProgressTimer();
-        showStatus("ویڈیو چل رہی ہے۔ آواز کے لیے آواز آن کریں دبائیں۔");
+        showStatus("ویڈیو چلانے کے لیے Play دبائیں۔");
       },
       onStateChange:function(event){
         if(event.data === YT.PlayerState.PLAYING){
@@ -575,7 +555,7 @@ window.onYouTubeIframeAPIReady = function(){
         showStatus("ویڈیو لوڈ نہیں ہو سکی۔ انٹرنیٹ اور YouTube ویڈیو کی دستیابی چیک کریں۔");
       },
       onAutoplayBlocked:function(){
-        showStatus("آٹو پلے بلاک ہے۔ ویڈیو چلانے کے لیے Play یا آواز آن کریں دبائیں۔");
+        showStatus("ویڈیو چلانے کے لیے Play دبائیں۔");
       }
     }
   });
@@ -584,7 +564,6 @@ window.onYouTubeIframeAPIReady = function(){
 updateLanguageButtons();
 loadYouTubeAPI();
 
-/* Required behavior: automatically open on every page refresh. */
 window.addEventListener("load",()=>{
   openPopup();
 });

@@ -8,173 +8,36 @@
 
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f3f5f7;
-  color:#202938;
-}
-header{
-  background:#173d32;
-  color:white;
-  padding:16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-button{
-  border:0;
-  border-radius:8px;
-  padding:10px 14px;
-  cursor:pointer;
-  font-size:14px;
-}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#202938}
+header{background:#173d32;color:white;padding:16px;display:flex;justify-content:space-between;align-items:center}
+button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14px}
 .helpBtn{background:#e8bd62;color:#172b24;font-weight:bold}
 .dashboard{padding:20px;max-width:1000px;margin:auto}
-.cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:14px;
-}
-.card{
-  background:white;
-  border-radius:12px;
-  padding:20px;
-  box-shadow:0 2px 8px #0000000b;
-}
-.modal{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  background:#000b;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
-}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px #0000000b}
+.modal{position:fixed;inset:0;z-index:1000;background:#000b;display:none;align-items:center;justify-content:center;padding:12px}
 .modal.open{display:flex}
-.tutorial{
-  width:min(900px,100%);
-  max-height:96dvh;
-  overflow:auto;
-  background:white;
-  border-radius:14px;
-  padding:16px;
-}
-.modalTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:12px;
-}
-.languages,.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+.tutorial{width:min(900px,100%);max-height:96dvh;overflow:auto;background:white;border-radius:14px;padding:16px}
+.modalTop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.languages,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .langBtn{background:#e9edf0;color:#222}
 .langBtn.active{background:#173d32;color:white}
 .closeBtn{background:#d93434;color:white}
-.videoStage{
-  position:relative;
-  width:100%;
-  aspect-ratio:16/9;
-  background:#000;
-  overflow:hidden;
-  border-radius:10px;
-}
-#player{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-}
-.gestureLayer{
-  position:absolute;
-  inset:0;
-  z-index:2;
-  background:transparent;
-  touch-action:manipulation;
-}
-.videoControls{
-  position:absolute;
-  z-index:5;
-  top:10px;
-  left:10px;
-  right:10px;
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  pointer-events:none;
-}
+.videoStage{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:10px}
+#player{position:absolute;inset:0;width:100%;height:100%}
+.gestureLayer{position:absolute;inset:0;z-index:2;background:transparent;touch-action:manipulation}
+.videoControls{position:absolute;z-index:5;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 .videoControls button{pointer-events:auto}
-.fullBtn{
-  background:#ffffffed;
-  color:#111;
-  font-size:24px;
-  font-weight:bold;
-  width:44px;
-  height:44px;
-  padding:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.fullExitBtn{
-  display:none;
-  position:absolute;
-  z-index:10;
-  top:12px;
-  right:12px;
-  background:#ffffffed;
-  color:#111;
-  font-weight:bold;
-}
-.videoStage:fullscreen,
-.videoStage:-webkit-full-screen{
-  width:100%;
-  height:100%;
-  aspect-ratio:auto;
-  border-radius:0;
-  background:#000;
-}
-.videoStage:fullscreen #player,
-.videoStage:-webkit-full-screen #player{
-  width:100%;
-  height:100%;
-}
-.videoStage:fullscreen .fullExitBtn,
-.videoStage:-webkit-full-screen .fullExitBtn{
-  display:block;
-}
-.status{
-  margin:12px 0;
-  font-size:14px;
-  color:#4b5563;
-  line-height:1.7;
-}
+.fullBtn{background:#ffffffed;color:#111;font-size:24px;font-weight:bold;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center}
+.fullExitBtn{display:none;position:absolute;z-index:10;top:12px;right:12px;background:#ffffffed;color:#111;font-weight:bold}
+.videoStage:fullscreen,.videoStage:-webkit-full-screen{width:100%;height:100%;aspect-ratio:auto;border-radius:0;background:#000}
+.videoStage:fullscreen #player,.videoStage:-webkit-full-screen #player{width:100%;height:100%}
+.videoStage:fullscreen .fullExitBtn,.videoStage:-webkit-full-screen .fullExitBtn{display:block}
+.status{margin:12px 0;font-size:14px;color:#4b5563;line-height:1.7}
 .actions button{background:#173d32;color:white}
-.actions .secondary{background:#e9edf0;color:#222}
-.progressTrack{
-  height:7px;
-  background:#e5e7eb;
-  border-radius:10px;
-  overflow:hidden;
-  margin-top:8px;
-}
-.progressFill{
-  height:100%;
-  width:0%;
-  background:#d5a943;
-}
-@media(max-width:500px){
-  .tutorial{padding:10px}
-  .modalTop{align-items:flex-start}
-  button{padding:9px 11px}
-  .fullBtn{padding:0;width:44px;height:44px}
-}
+.progressTrack{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:8px}
+.progressFill{height:100%;width:0%;background:#d5a943}
+@media(max-width:500px){.tutorial{padding:10px}.modalTop{align-items:flex-start}button{padding:9px 11px}.fullBtn{padding:0;width:44px;height:44px}}
 </style>
 </head>
 
@@ -209,26 +72,20 @@ button{
     <div class="videoStage" id="videoStage">
       <div id="player"></div>
       <div class="gestureLayer" id="gestureLayer"></div>
-
       <div class="videoControls">
         <span></span>
-        <button class="fullBtn" id="fullBtn"
-          aria-label="Full Screen" title="Full Screen">⛶</button>
+        <button class="fullBtn" id="fullBtn" aria-label="Full Screen" title="Full Screen">⛶</button>
       </div>
-
-      <button class="fullExitBtn" id="fullExitBtn">
-        ✕ Exit Full Screen
-      </button>
+      <button class="fullExitBtn" id="fullExitBtn">✕ Exit Full Screen</button>
     </div>
 
-    <div class="status" id="status">ویڈیو لوڈ ہو رہی ہے...</div>
+    <div class="status" id="status">Status: Pending</div>
     <div class="progressTrack">
       <div class="progressFill" id="progressFill"></div>
     </div>
 
     <div class="actions" style="margin-top:14px">
       <button id="playPauseBtn">▶ Play</button>
-      <button class="secondary" id="resumeBtn">Resume</button>
     </div>
   </section>
 </div>
@@ -240,6 +97,7 @@ const VIDEOS = {
 };
 
 const STORAGE_KEY = "driverTutorialTestV5";
+const STATUS_KEY = "driverTutorialStatusV1";
 
 const modal = document.getElementById("modal");
 const helpBtn = document.getElementById("helpBtn");
@@ -247,7 +105,6 @@ const closeBtn = document.getElementById("closeBtn");
 const urduBtn = document.getElementById("urduBtn");
 const englishBtn = document.getElementById("englishBtn");
 const playPauseBtn = document.getElementById("playPauseBtn");
-const resumeBtn = document.getElementById("resumeBtn");
 const fullBtn = document.getElementById("fullBtn");
 const fullExitBtn = document.getElementById("fullExitBtn");
 const videoStage = document.getElementById("videoStage");
@@ -273,32 +130,42 @@ function readState(){
       }
     };
   }catch(e){
-    return {
-      language:"urdu",
-      positions:{urdu:0,english:0}
-    };
+    return {language:"urdu",positions:{urdu:0,english:0}};
   }
 }
 
 let savedState = readState();
 currentLanguage = savedState.language;
 
+function getTutorialStatus(){
+  return localStorage.getItem(STATUS_KEY) === "complete"
+    ? "complete"
+    : "pending";
+}
+
+function setTutorialStatus(status){
+  try{
+    localStorage.setItem(STATUS_KEY,status);
+  }catch(e){}
+  showStatus("Status: " + (status === "complete" ? "Complete" : "Pending"));
+}
+
 function saveState(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      language: currentLanguage,
-      positions: savedState.positions
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+      language:currentLanguage,
+      positions:savedState.positions
     }));
   }catch(e){}
 }
 
 function savedPosition(){
-  return Math.max(0, Math.floor(savedState.positions[currentLanguage] || 0));
+  return Math.max(0,Math.floor(savedState.positions[currentLanguage] || 0));
 }
 
 function updateLanguageButtons(){
-  urduBtn.classList.toggle("active", currentLanguage === "urdu");
-  englishBtn.classList.toggle("active", currentLanguage === "english");
+  urduBtn.classList.toggle("active",currentLanguage === "urdu");
+  englishBtn.classList.toggle("active",currentLanguage === "english");
 }
 
 function showStatus(message){
@@ -307,6 +174,9 @@ function showStatus(message){
 
 function openPopup(){
   modal.classList.add("open");
+  if(playerReady && player){
+    startProgressTimer();
+  }
 }
 
 function closePopup(){
@@ -323,7 +193,6 @@ function closePopup(){
   if(playerReady && player){
     player.pauseVideo();
   }
-
   modal.classList.remove("open");
 }
 
@@ -331,8 +200,7 @@ function saveCurrentPosition(){
   if(!playerReady || !player) return;
 
   try{
-    const state = player.getPlayerState();
-    if(state !== YT.PlayerState.ENDED){
+    if(player.getPlayerState() !== YT.PlayerState.ENDED){
       const seconds = Math.floor(player.getCurrentTime() || 0);
       if(seconds >= 0){
         savedState.positions[currentLanguage] = seconds;
@@ -363,14 +231,13 @@ function startProgressTimer(){
       }
 
       progressFill.style.width = duration > 0
-        ? Math.min(100, current / duration * 100) + "%"
+        ? Math.min(100,current/duration*100) + "%"
         : "0%";
 
-      if(duration > 0){
-        showStatus(
-          (currentLanguage === "urdu" ? "اردو ٹیوٹوریل" : "English Tutorial") +
-          " — " + formatTime(current) + " / " + formatTime(duration)
-        );
+      if(getTutorialStatus() === "complete"){
+        showStatus("Status: Complete");
+      }else{
+        showStatus("Status: Pending");
       }
     }catch(e){}
   },1000);
@@ -381,11 +248,6 @@ function stopProgressTimer(){
     clearInterval(progressTimer);
     progressTimer = null;
   }
-}
-
-function formatTime(value){
-  const s = Math.floor(value || 0);
-  return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
 }
 
 function togglePlayPause(){
@@ -417,10 +279,9 @@ function switchLanguage(language){
   lastSavedSecond = -1;
 
   if(playerReady && player){
-    showStatus("ویڈیو تبدیل ہو رہی ہے...");
     player.loadVideoById({
-      videoId: VIDEOS[currentLanguage],
-      startSeconds: savedPosition()
+      videoId:VIDEOS[currentLanguage],
+      startSeconds:savedPosition()
     });
   }
 }
@@ -463,15 +324,6 @@ function toggleFullscreen(){
 helpBtn.addEventListener("click",openPopup);
 closeBtn.addEventListener("click",closePopup);
 playPauseBtn.addEventListener("click",togglePlayPause);
-
-resumeBtn.addEventListener("click",()=>{
-  if(!playerReady || !player) return;
-  player.seekTo(savedPosition(),true);
-  player.unMute();
-  player.setVolume(100);
-  player.playVideo();
-});
-
 fullBtn.addEventListener("click",toggleFullscreen);
 fullExitBtn.addEventListener("click",exitFullscreen);
 urduBtn.addEventListener("click",()=>switchLanguage("urdu"));
@@ -490,7 +342,7 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pagehide",saveCurrentPosition);
 window.addEventListener("beforeunload",saveCurrentPosition);
 
-/* Single tap = Play/Pause, double tap = toggle fullscreen */
+/* Single tap = Play/Pause; double tap = Full Screen */
 gestureLayer.addEventListener("click",()=>{
   if(singleTapTimer){
     clearTimeout(singleTapTimer);
@@ -506,7 +358,6 @@ gestureLayer.addEventListener("click",()=>{
 
 function loadYouTubeAPI(){
   if(document.getElementById("youtubeIframeApi")) return;
-
   const tag = document.createElement("script");
   tag.id = "youtubeIframeApi";
   tag.src = "https://www.youtube.com/iframe_api";
@@ -517,7 +368,7 @@ window.onYouTubeIframeAPIReady = function(){
   player = new YT.Player("player",{
     width:"100%",
     height:"100%",
-    videoId: VIDEOS[currentLanguage],
+    videoId:VIDEOS[currentLanguage],
     playerVars:{
       autoplay:0,
       controls:0,
@@ -532,10 +383,9 @@ window.onYouTubeIframeAPIReady = function(){
         playerReady = true;
         event.target.pauseVideo();
         event.target.seekTo(savedPosition(),true);
-
         updateLanguageButtons();
         startProgressTimer();
-        showStatus("ویڈیو چلانے کے لیے Play دبائیں۔");
+        showStatus("Status: " + (getTutorialStatus() === "complete" ? "Complete" : "Pending"));
       },
       onStateChange:function(event){
         if(event.data === YT.PlayerState.PLAYING){
@@ -547,7 +397,7 @@ window.onYouTubeIframeAPIReady = function(){
           savedState.positions[currentLanguage] = 0;
           saveState();
           progressFill.style.width = "100%";
-          showStatus("ٹیوٹوریل مکمل ہو گیا ہے۔");
+          setTutorialStatus("complete");
           playPauseBtn.textContent = "▶ Play";
         }
       },
@@ -565,7 +415,12 @@ updateLanguageButtons();
 loadYouTubeAPI();
 
 window.addEventListener("load",()=>{
-  openPopup();
+  if(getTutorialStatus() === "pending"){
+    openPopup();
+  }else{
+    modal.classList.remove("open");
+    showStatus("Status: Complete");
+  }
 });
 </script>
 </body>

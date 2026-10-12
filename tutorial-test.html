@@ -3,623 +3,755 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Driver Software Tutorial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Driver Tutorial Test</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: 20px;
-      background: #f3f6f8;
-      color: #1f2937;
       font-family: Arial, sans-serif;
-    }
-
-    .page {
-      max-width: 950px;
-      margin: 0 auto;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 16px;
+      background: #f1f5f9;
+      color: #172033;
     }
 
     button {
       border: 0;
       border-radius: 9px;
-      padding: 12px 18px;
+      padding: 11px 16px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    button:focus-visible {
+      outline: 3px solid #f59e0b;
+      outline-offset: 3px;
     }
 
-    .help-btn {
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 14px;
+    }
+
+    .help-btn, .primary {
       background: #166534;
       color: #fff;
     }
 
-    .tutorial-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 5px 24px rgba(0, 0, 0, 0.07);
+    .page {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 10px 16px 40px;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: 27px;
+    .page h1 {
+      font-size: 25px;
       text-align: center;
     }
 
-    .intro {
-      text-align: center;
+    .page p {
       color: #64748b;
-      line-height: 1.6;
-      margin-bottom: 22px;
-    }
-
-    .language-buttons {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .language-btn {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .language-btn.active {
-      background: #166534;
-      color: white;
-    }
-
-    .video-box {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #111827;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    #player {
-      width: 100%;
-      height: 100%;
-    }
-
-    .status {
-      min-height: 24px;
-      margin: 14px 0;
       text-align: center;
-      color: #475569;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .play-btn {
-      background: #166534;
-      color: white;
-    }
-
-    .secondary-btn {
-      background: #e5e7eb;
-      color: #111827;
+      line-height: 1.6;
     }
 
     .dashboard {
-      margin-top: 22px;
-      padding: 20px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 5px 24px rgba(0, 0, 0, 0.05);
-    }
-
-    .dashboard h2 {
-      margin-top: 0;
-      font-size: 21px;
-    }
-
-    .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
+      margin-top: 25px;
     }
 
-    .dashboard-item {
-      background: #f8fafc;
+    .tile {
+      padding: 20px;
+      background: #fff;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 12px;
     }
 
-    .dashboard-item strong {
+    .tile strong {
       display: block;
-      margin-bottom: 6px;
       color: #166534;
+      margin-bottom: 8px;
     }
 
-    .dashboard-item span {
+    .tile span {
       color: #64748b;
       font-size: 14px;
     }
 
-    [hidden] {
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(15, 23, 42, 0.82);
+      overflow-y: auto;
+    }
+
+    .modal[hidden] {
       display: none !important;
     }
 
+    .modal-card {
+      width: min(900px, 100%);
+      max-height: 96vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .modal-header h2 {
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: #fee2e2;
+      color: #991b1b;
+      flex-shrink: 0;
+    }
+
+    .languages, .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .lang-btn, .secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .lang-btn.active {
+      background: #166534;
+      color: #fff;
+    }
+
+    .video-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    #player {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* Captures single and double taps for custom player actions. */
+    .gesture-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: transparent;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .gesture-layer:focus-visible {
+      outline: 3px solid #f59e0b;
+      outline-offset: -4px;
+    }
+
+    .status {
+      min-height: 22px;
+      margin: 12px 0;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #475569;
+    }
+
+    .progress-wrap {
+      margin: 10px 0 16px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .progress-track {
+      height: 7px;
+      border-radius: 99px;
+      overflow: hidden;
+      background: #e2e8f0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #16a34a;
+      transition: width 0.2s linear;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.6;
+      text-align: center;
+    }
+
     @media (max-width: 600px) {
-      body {
-        padding: 12px;
-      }
-
-      .tutorial-card {
-        padding: 16px;
-      }
-
-      h1 {
-        font-size: 23px;
-      }
-
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-
-      button {
-        padding: 11px 14px;
-      }
+      .modal-card { padding: 14px; }
+      .modal-header h2 { font-size: 19px; }
+      .dashboard { grid-template-columns: 1fr; }
+      button { padding: 10px 13px; }
     }
   </style>
 </head>
 
 <body>
+
+  <div class="topbar">
+    <button type="button" class="help-btn" id="helpBtn">
+      ❓ Help / مدد
+    </button>
+  </div>
+
   <main class="page">
+    <h1>Driver Software Dashboard</h1>
+    <p>
+      This is a test dashboard. Use the Help button to open the tutorial.
+    </p>
 
-    <!-- Help button remains available after tutorial completion -->
-    <div class="top-bar">
-      <button type="button" class="help-btn" id="helpBtn">
-        ❓ Help / مدد
-      </button>
+    <div class="dashboard">
+      <div class="tile">
+        <strong>New Invoice</strong>
+        <span>Create and manage invoices.</span>
+      </div>
+      <div class="tile">
+        <strong>Charge Setup</strong>
+        <span>Manage charges and deductions.</span>
+      </div>
+      <div class="tile">
+        <strong>Target Setup</strong>
+        <span>Set your earning target.</span>
+      </div>
+      <div class="tile">
+        <strong>Leaves</strong>
+        <span>Manage leave records.</span>
+      </div>
+      <div class="tile">
+        <strong>Reports</strong>
+        <span>Review your records.</span>
+      </div>
+      <div class="tile">
+        <strong>Shift Summary</strong>
+        <span>Review your shift performance.</span>
+      </div>
     </div>
+  </main>
 
-    <!-- Tutorial section -->
-    <section class="tutorial-card" id="tutorial">
+  <!-- Tutorial popup -->
+  <section class="modal" id="tutorialModal"
+           role="dialog" aria-modal="true"
+           aria-labelledby="tutorialTitle">
 
-      <h1>Driver Software Tutorial</h1>
+    <div class="modal-card">
 
-      <p class="intro">
-        Choose your preferred language and watch the tutorial to learn
-        how to use the driver software.
-      </p>
+      <div class="modal-header">
+        <h2 id="tutorialTitle">Driver Software Tutorial</h2>
+        <button type="button" class="close-btn" id="closeBtn">
+          ✕ Close
+        </button>
+      </div>
 
-      <div class="language-buttons">
-        <button type="button"
-                class="language-btn active"
-                id="urduBtn">
+      <div class="languages">
+        <button type="button" class="lang-btn active" id="urduBtn">
           اردو
         </button>
-
-        <button type="button"
-                class="language-btn"
-                id="englishBtn">
+        <button type="button" class="lang-btn" id="englishBtn">
           English
         </button>
       </div>
 
-      <div class="video-box">
+      <div class="video-frame" id="videoFrame">
         <div id="player"></div>
+        <div class="gesture-layer" id="gestureLayer"
+             role="button" tabindex="0"
+             aria-label="Tap to play, pause, or enable sound. Double tap for fullscreen.">
+        </div>
       </div>
 
-      <p class="status" id="status" aria-live="polite">
-        Loading video player. Please wait...
-      </p>
+      <div class="status" id="status" aria-live="polite">
+        Loading video player...
+      </div>
 
-      <div class="action-buttons">
-        <button type="button" class="play-btn" id="playBtn" disabled>
-          ▶ Play Video
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span id="progressText">Video progress</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="primary" id="playBtn" disabled>
+          ▶ Play / Sound
         </button>
-
-        <button type="button" class="secondary-btn" id="resumeBtn">
-          Resume Video
+        <button type="button" class="secondary" id="resumeBtn" disabled>
+          Resume
         </button>
-
-        <button type="button" class="secondary-btn" id="fullscreenBtn">
+        <button type="button" class="secondary" id="fullscreenBtn">
           ⛶ Fullscreen
         </button>
-
-        <button type="button" class="secondary-btn" id="closeBtn">
-          Close Tutorial
-        </button>
       </div>
 
-    </section>
+      <p class="hint">
+        Single tap: play or pause. Double tap: fullscreen.
+        If autoplay sound is blocked by your browser, tap Play / Sound.
+      </p>
 
-    <!-- Sample dashboard section -->
-    <section class="dashboard">
-      <h2>Driver Dashboard</h2>
-
-      <div class="dashboard-grid">
-        <div class="dashboard-item">
-          <strong>New Invoice</strong>
-          <span>Create and save a new invoice.</span>
-        </div>
-
-        <div class="dashboard-item">
-          <strong>Charge Setup</strong>
-          <span>Manage your charges and deductions.</span>
-        </div>
-
-        <div class="dashboard-item">
-          <strong>Target Setup</strong>
-          <span>Set your earning target and commission.</span>
-        </div>
-
-        <div class="dashboard-item">
-          <strong>Leaves</strong>
-          <span>Manage your leave records.</span>
-        </div>
-
-        <div class="dashboard-item">
-          <strong>Reports</strong>
-          <span>Review your earning and work records.</span>
-        </div>
-
-        <div class="dashboard-item">
-          <strong>Shift Summary</strong>
-          <span>Check your shift details and performance.</span>
-        </div>
-      </div>
-    </section>
-
-  </main>
+    </div>
+  </section>
 
   <script>
-    const VIDEOS = {
-      urdu: "xFGi__79snw",
-      english: "EVV4h_WpcUo"
-    };
+    (() => {
+      "use strict";
 
-    const STORAGE_KEY = "driverTutorialDemoV2";
-    const FINISHED_KEY = "driverTutorialFinished";
+      const VIDEOS = {
+        urdu: "xFGi__79snw",
+        english: "EVV4h_WpcUo"
+      };
 
-    let player = null;
-    let ready = false;
-    let currentLanguage = "urdu";
-    let savedPositions = {
-      urdu: 0,
-      english: 0
-    };
-    let completed = {
-      urdu: false,
-      english: false
-    };
+      const STORAGE_KEY = "driverTutorialTestV3";
 
-    const tutorial = document.getElementById("tutorial");
-    const statusText = document.getElementById("status");
-    const playBtn = document.getElementById("playBtn");
-    const urduBtn = document.getElementById("urduBtn");
-    const englishBtn = document.getElementById("englishBtn");
+      const modal = document.getElementById("tutorialModal");
+      const helpBtn = document.getElementById("helpBtn");
+      const closeBtn = document.getElementById("closeBtn");
+      const urduBtn = document.getElementById("urduBtn");
+      const englishBtn = document.getElementById("englishBtn");
+      const playBtn = document.getElementById("playBtn");
+      const resumeBtn = document.getElementById("resumeBtn");
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      const gestureLayer = document.getElementById("gestureLayer");
+      const videoFrame = document.getElementById("videoFrame");
+      const status = document.getElementById("status");
+      const progressFill = document.getElementById("progressFill");
+      const progressPercent = document.getElementById("progressPercent");
+      const progressText = document.getElementById("progressText");
 
-    function setStatus(message) {
-      statusText.textContent = message;
-    }
+      let player = null;
+      let ready = false;
+      let language = "urdu";
+      let duration = 0;
+      let lastTapTime = 0;
+      let singleTapTimer = null;
+      let progressTimer = null;
+      let lastSavedSecond = -1;
+      let restorePosition = 0;
+      let hasUserInteracted = false;
 
-    function readProgress() {
-      try {
-        const saved = JSON.parse(
-          localStorage.getItem(STORAGE_KEY) || "{}"
-        );
+      let data = {
+        positions: { urdu: 0, english: 0 },
+        completed: { urdu: false, english: false }
+      };
 
-        if (saved.positions) {
-          savedPositions.urdu =
-            Number(saved.positions.urdu) || 0;
-
-          savedPositions.english =
-            Number(saved.positions.english) || 0;
-        }
-
-        if (saved.completed) {
-          completed.urdu = !!saved.completed.urdu;
-          completed.english = !!saved.completed.english;
-        }
-      } catch (error) {
-        console.log("Could not read saved progress.");
-      }
-    }
-
-    function saveProgress() {
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            positions: savedPositions,
-            completed: completed
-          })
-        );
-      } catch (error) {
-        console.log("Could not save video progress.");
-      }
-    }
-
-    function updateLanguageButtons() {
-      urduBtn.classList.toggle(
-        "active",
-        currentLanguage === "urdu"
-      );
-
-      englishBtn.classList.toggle(
-        "active",
-        currentLanguage === "english"
-      );
-    }
-
-    function saveCurrentPosition() {
-      if (!ready || !player) return;
-
-      try {
-        const state = player.getPlayerState();
-
-        if (
-          state !== YT.PlayerState.ENDED &&
-          !completed[currentLanguage]
-        ) {
-          savedPositions[currentLanguage] =
-            Math.floor(player.getCurrentTime() || 0);
-
-          saveProgress();
-        }
-      } catch (error) {
-        console.log("Could not save current position.");
-      }
-    }
-
-    function playWithSound() {
-      if (!ready || !player) {
-        setStatus("Please wait for the video player to load.");
-        return;
+      function setStatus(message) {
+        status.textContent = message;
       }
 
-      try {
-        player.unMute();
-        player.setVolume(100);
-        player.playVideo();
+      function loadData() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
 
-        setStatus("Video is starting. Check your device volume.");
-      } catch (error) {
-        setStatus("Unable to play the video. Please try again.");
-      }
-    }
-
-    function changeLanguage(language) {
-      if (language === currentLanguage) return;
-
-      saveCurrentPosition();
-
-      currentLanguage = language;
-      updateLanguageButtons();
-
-      if (!ready || !player) {
-        setStatus("Please wait for the video player to load.");
-        return;
-      }
-
-      const startAt = completed[language]
-        ? 0
-        : savedPositions[language];
-
-      player.loadVideoById({
-        videoId: VIDEOS[language],
-        startSeconds: startAt
-      });
-
-      player.unMute();
-      player.setVolume(100);
-
-      setStatus(
-        language === "urdu"
-          ? "اردو ویڈیو منتخب ہوگئی ہے۔ چلانے کے لیے Play Video دبائیں۔"
-          : "English video selected. Press Play Video to start."
-      );
-    }
-
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player("player", {
-        videoId: VIDEOS[currentLanguage],
-
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          playsinline: 1,
-          enablejsapi: 1,
-          rel: 0,
-          origin: window.location.origin
-        },
-
-        events: {
-          onReady: function () {
-            ready = true;
-            playBtn.disabled = false;
-
-            player.setVolume(100);
-            player.unMute();
-
-            setStatus(
-              "Player ready. Select a language and press Play Video."
-            );
-          },
-
-          onStateChange: function (event) {
-            if (!ready || !player) return;
-
-            if (event.data === YT.PlayerState.PLAYING) {
-              setStatus(
-                currentLanguage === "urdu"
-                  ? "اردو ٹیوٹوریل چل رہا ہے۔"
-                  : "English tutorial is playing."
-              );
-            }
-
-            if (event.data === YT.PlayerState.PAUSED) {
-              saveCurrentPosition();
-              setStatus("Video paused. Press Play Video to continue.");
-            }
-
-            if (event.data === YT.PlayerState.ENDED) {
-              completed[currentLanguage] = true;
-              savedPositions[currentLanguage] = 0;
-
-              saveProgress();
-
-              try {
-                localStorage.setItem(FINISHED_KEY, "yes");
-              } catch (error) {
-                console.log("Could not save completion status.");
-              }
-
-              setStatus("Tutorial completed successfully.");
-
-              setTimeout(function () {
-                tutorial.hidden = true;
-              }, 1000);
-            }
-          },
-
-          onError: function (event) {
-            const messages = {
-              2: "Invalid video ID.",
-              5: "This video cannot be played in the current player.",
-              100: "This video was not found or is unavailable.",
-              101: "The video owner does not allow embedded playback.",
-              150: "The video owner does not allow embedded playback.",
-              153: "YouTube could not verify the playback request. Try opening the website through its normal web address."
-            };
-
-            setStatus(
-              messages[event.data] ||
-              "Video playback failed. Please try again."
-            );
+          if (saved.positions) {
+            data.positions.urdu = Math.max(0, Number(saved.positions.urdu) || 0);
+            data.positions.english = Math.max(0, Number(saved.positions.english) || 0);
           }
+
+          if (saved.completed) {
+            data.completed.urdu = !!saved.completed.urdu;
+            data.completed.english = !!saved.completed.english;
+          }
+        } catch (error) {
+          console.warn("Could not load tutorial progress.", error);
         }
-      });
-    }
+      }
 
-    // Make callback available to the YouTube API.
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+      function saveData() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+          setStatus("Progress could not be saved in this browser.");
+        }
+      }
 
-    // Load YouTube player API.
-    const youtubeScript = document.createElement("script");
-    youtubeScript.src = "https://www.youtube.com/iframe_api";
-    youtubeScript.async = true;
-    document.head.appendChild(youtubeScript);
+      function updateProgress(seconds) {
+        const current = Math.max(0, Number(seconds) || 0);
+        const percent = duration > 0
+          ? Math.min(100, Math.round((current / duration) * 100))
+          : 0;
 
-    playBtn.addEventListener("click", playWithSound);
+        progressFill.style.width = percent + "%";
+        progressPercent.textContent = percent + "%";
+        progressText.textContent = "Video progress";
+      }
 
-    urduBtn.addEventListener("click", function () {
-      changeLanguage("urdu");
-    });
+      function updateLanguageButtons() {
+        urduBtn.classList.toggle("active", language === "urdu");
+        englishBtn.classList.toggle("active", language === "english");
+      }
 
-    englishBtn.addEventListener("click", function () {
-      changeLanguage("english");
-    });
-
-    document.getElementById("resumeBtn").addEventListener(
-      "click",
-      function () {
+      function enableSoundAndPlay() {
         if (!ready || !player) {
           setStatus("Please wait for the video player to load.");
           return;
         }
 
-        const position = savedPositions[currentLanguage] || 0;
+        hasUserInteracted = true;
 
-        if (position > 0) {
-          player.seekTo(position, true);
-        }
-
-        playWithSound();
-      }
-    );
-
-    document.getElementById("fullscreenBtn").addEventListener(
-      "click",
-      function () {
-        if (!ready || !player) {
-          setStatus("Please wait for the video player to load.");
-          return;
-        }
-
-        const iframe = player.getIframe();
-
-        if (iframe.requestFullscreen) {
-          iframe.requestFullscreen();
-        } else if (iframe.webkitRequestFullscreen) {
-          iframe.webkitRequestFullscreen();
-        } else {
-          setStatus("Fullscreen is not supported by this browser.");
+        try {
+          player.unMute();
+          player.setVolume(100);
+          player.playVideo();
+          setStatus("Playing video with sound.");
+        } catch (error) {
+          setStatus("Could not start video. Please try again.");
         }
       }
-    );
 
-    document.getElementById("closeBtn").addEventListener(
-      "click",
-      function () {
-        tutorial.hidden = true;
+      function togglePlayback() {
+        if (!ready || !player) return;
+
+        hasUserInteracted = true;
+
+        try {
+          if (player.isMuted()) {
+            player.unMute();
+            player.setVolume(100);
+            player.playVideo();
+            setStatus("Sound enabled. Video is playing.");
+            return;
+          }
+
+          const state = player.getPlayerState();
+
+          if (state === YT.PlayerState.PLAYING) {
+            player.pauseVideo();
+          } else {
+            player.unMute();
+            player.setVolume(100);
+            player.playVideo();
+          }
+        } catch (error) {
+          setStatus("Playback control failed. Use Play / Sound.");
+        }
       }
-    );
 
-    document.getElementById("helpBtn").addEventListener(
-      "click",
-      function () {
-        tutorial.hidden = false;
+      function saveCurrentPosition() {
+        if (!ready || !player) return;
 
-        tutorial.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
+        try {
+          const state = player.getPlayerState();
+          const current = Math.floor(player.getCurrentTime() || 0);
+
+          if (state === YT.PlayerState.ENDED) {
+            data.positions[language] = 0;
+          } else if (current >= 0) {
+            data.positions[language] = current;
+          }
+
+          saveData();
+        } catch (error) {
+          console.warn("Could not save current position.", error);
+        }
+      }
+
+      function changeLanguage(nextLanguage) {
+        if (nextLanguage === language) return;
+
+        saveCurrentPosition();
+
+        language = nextLanguage;
+        restorePosition = data.completed[language]
+          ? 0
+          : data.positions[language];
+
+        updateLanguageButtons();
+        updateProgress(restorePosition);
+
+        if (!ready || !player) return;
+
+        player.loadVideoById({
+          videoId: VIDEOS[language],
+          startSeconds: restorePosition
         });
+
+        // Attempt to enable sound; a user gesture may still be required.
+        if (hasUserInteracted) {
+          player.unMute();
+          player.setVolume(100);
+        }
+
+        setStatus(
+          language === "urdu"
+            ? "اردو ویڈیو منتخب ہوگئی ہے۔"
+            : "English video selected."
+        );
+      }
+
+      function openTutorial() {
+        modal.hidden = false;
 
         if (ready && player) {
           setStatus(
-            "Select a language and press Play Video to start."
+            "Status: " +
+            (data.completed[language]
+              ? "Completed previously. You can replay the video."
+              : "Resume position: " + formatTime(data.positions[language]))
           );
         }
+
+        // Do not force playback from Help if the video is already playing.
       }
-    );
 
-    // Save progress when the user leaves or reloads the page.
-    window.addEventListener("beforeunload", saveCurrentPosition);
-
-    // Load previously saved progress.
-    readProgress();
-    updateLanguageButtons();
-
-    // If the tutorial was completed earlier, keep it hidden
-    // until the user clicks Help.
-    try {
-      if (localStorage.getItem(FINISHED_KEY) === "yes") {
-        tutorial.hidden = true;
+      function closeTutorial() {
+        saveCurrentPosition();
+        modal.hidden = true;
       }
-    } catch (error) {
-      console.log("Could not read completion status.");
-    }
+
+      function formatTime(seconds) {
+        const total = Math.max(0, Math.floor(Number(seconds) || 0));
+        const minutes = Math.floor(total / 60);
+        const secs = total % 60;
+        return minutes + ":" + String(secs).padStart(2, "0");
+      }
+
+      function enterFullscreen() {
+        if (!ready || !player) return;
+
+        const iframe = player.getIframe();
+
+        try {
+          if (iframe.requestFullscreen) {
+            iframe.requestFullscreen();
+          } else if (videoFrame.requestFullscreen) {
+            videoFrame.requestFullscreen();
+          } else if (iframe.webkitRequestFullscreen) {
+            iframe.webkitRequestFullscreen();
+          } else {
+            setStatus("Fullscreen is not supported by this browser.");
+          }
+        } catch (error) {
+          setStatus("Tap the fullscreen button again to allow fullscreen.");
+        }
+      }
+
+      function handleTap() {
+        const now = Date.now();
+
+        if (now - lastTapTime < 300) {
+          clearTimeout(singleTapTimer);
+          singleTapTimer = null;
+          lastTapTime = 0;
+          enterFullscreen();
+          return;
+        }
+
+        lastTapTime = now;
+
+        singleTapTimer = setTimeout(() => {
+          singleTapTimer = null;
+          togglePlayback();
+        }, 280);
+      }
+
+      function startProgressSaving() {
+        if (progressTimer) clearInterval(progressTimer);
+
+        progressTimer = setInterval(() => {
+          if (!ready || !player || modal.hidden) return;
+
+          try {
+            const current = Math.floor(player.getCurrentTime() || 0);
+            duration = player.getDuration() || duration;
+            updateProgress(current);
+
+            // Save every 3 seconds to reduce lost progress on refresh.
+            if (current !== lastSavedSecond && current % 3 === 0) {
+              lastSavedSecond = current;
+              saveCurrentPosition();
+            }
+          } catch (error) {
+            // Player may still be loading.
+          }
+        }, 1000);
+      }
+
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player("player", {
+          videoId: VIDEOS[language],
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            playsinline: 1,
+            enablejsapi: 1,
+            rel: 0,
+            origin: window.location.origin,
+            start: Math.floor(restorePosition)
+          },
+          events: {
+            onReady: function () {
+              ready = true;
+              playBtn.disabled = false;
+              resumeBtn.disabled = false;
+
+              try {
+                player.setVolume(100);
+
+                // Muted autoplay is more likely to be permitted by browsers.
+                player.mute();
+                player.playVideo();
+              } catch (error) {
+                setStatus("Press Play / Sound to start the video.");
+              }
+
+              setStatus(
+                "Video loaded. If it does not start, press Play / Sound."
+              );
+
+              startProgressSaving();
+            },
+
+            onStateChange: function (event) {
+              if (!ready || !player) return;
+
+              if (event.data === YT.PlayerState.PLAYING) {
+                duration = player.getDuration() || duration;
+                setStatus(
+                  player.isMuted()
+                    ? "Video playing. Tap Play / Sound to enable audio."
+                    : "Video playing with sound."
+                );
+              }
+
+              if (event.data === YT.PlayerState.PAUSED) {
+                saveCurrentPosition();
+                setStatus("Video paused. Tap the video to continue.");
+              }
+
+              if (event.data === YT.PlayerState.ENDED) {
+                data.completed[language] = true;
+                data.positions[language] = 0;
+                saveData();
+                updateProgress(duration);
+                setStatus("Tutorial completed. Use Help to watch again.");
+
+                setTimeout(() => {
+                  modal.hidden = true;
+                }, 1200);
+              }
+            },
+
+            onError: function (event) {
+              const messages = {
+                2: "Invalid YouTube video ID.",
+                5: "YouTube could not play this video in the embedded player.",
+                100: "Video unavailable or removed.",
+                101: "The owner does not allow embedded playback.",
+                150: "The owner does not allow embedded playback.",
+                153: "YouTube could not verify this embedded request. Open the page through its normal website address and try again."
+              };
+
+              setStatus(messages[event.data] || "Video playback error: " + event.data);
+            }
+          }
+        });
+      };
+
+      // Load YouTube IFrame Player API.
+      const apiScript = document.createElement("script");
+      apiScript.src = "https://www.youtube.com/iframe_api";
+      apiScript.async = true;
+      document.head.appendChild(apiScript);
+
+      helpBtn.addEventListener("click", openTutorial);
+      closeBtn.addEventListener("click", closeTutorial);
+
+      urduBtn.addEventListener("click", () => changeLanguage("urdu"));
+      englishBtn.addEventListener("click", () => changeLanguage("english"));
+
+      playBtn.addEventListener("click", enableSoundAndPlay);
+
+      resumeBtn.addEventListener("click", () => {
+        if (!ready || !player) return;
+
+        const position = data.completed[language]
+          ? 0
+          : data.positions[language];
+
+        player.seekTo(position, true);
+        enableSoundAndPlay();
+      });
+
+      fullscreenBtn.addEventListener("click", enterFullscreen);
+
+      gestureLayer.addEventListener("pointerup", event => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        event.preventDefault();
+        handleTap();
+      });
+
+      gestureLayer.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          togglePlayback();
+        }
+      });
+
+      // Save position immediately before a page refresh or navigation.
+      window.addEventListener("pagehide", saveCurrentPosition);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          saveCurrentPosition();
+        }
+      });
+
+      loadData();
+      restorePosition = data.completed[language]
+        ? 0
+        : data.positions[language];
+
+      updateLanguageButtons();
+      updateProgress(restorePosition);
+
+      // Required behaviour: popup opens on every page refresh.
+      modal.hidden = false;
+    })();
   </script>
+
 </body>
 </html>

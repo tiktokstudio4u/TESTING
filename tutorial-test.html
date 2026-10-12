@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,444 +8,586 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172033}
-button{border:0;border-radius:9px;padding:11px 15px;font-size:15px;font-weight:600;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-.topbar{display:flex;justify-content:flex-end;padding:14px}
-.help,.primary{background:#166534;color:white}
-.page{max-width:850px;margin:auto;padding:10px 16px 40px}
-.page h1{text-align:center;font-size:25px}
-.page p{text-align:center;color:#64748b;line-height:1.6}
-.dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:25px}
-.tile{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px}
-.tile strong{display:block;color:#166534;margin-bottom:8px}
-.tile span{font-size:14px;color:#64748b}
-.modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(15,23,42,.84);overflow:auto}
-.modal[hidden]{display:none!important}
-.card{width:min(900px,100%);max-height:96vh;overflow:auto;background:white;border-radius:15px;padding:18px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.header h2{font-size:21px;margin:0}
-.close{background:#fee2e2;color:#991b1b}
-.languages,.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:13px 0}
-.lang,.secondary{background:#e2e8f0;color:#1e293b}
-.lang.active{background:#166534;color:white}
-.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:10px}
-#player{position:absolute;inset:0;width:100%;height:100%;border:0}
-.gesture{position:absolute;inset:0;z-index:2;background:transparent;touch-action:manipulation;cursor:pointer}
-.status{text-align:center;min-height:22px;font-size:14px;line-height:1.6;color:#475569;margin:12px 0}
-.progress-label{display:flex;justify-content:space-between;font-size:13px;color:#475569;margin-bottom:6px}
-.track{height:7px;background:#e2e8f0;border-radius:10px;overflow:hidden}
-.fill{height:100%;width:0;background:#16a34a}
-.hint{text-align:center;font-size:13px;color:#64748b;line-height:1.6}
-.exit-fullscreen{display:none;position:fixed;z-index:2000;top:15px;right:15px;background:#991b1b;color:white}
-.exit-fullscreen.visible{display:block}
-@media(max-width:600px){
- .card{padding:12px}
- .header h2{font-size:18px}
- .dashboard{grid-template-columns:1fr}
- button{padding:10px 12px}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f5f7;
+  color:#202938;
+}
+header{
+  background:#173d32;
+  color:white;
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+button{
+  border:0;
+  border-radius:8px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-size:14px;
+}
+.helpBtn{background:#e8bd62;color:#172b24;font-weight:bold}
+.dashboard{padding:20px;max-width:1000px;margin:auto}
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:14px;
+}
+.card{
+  background:white;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 2px 8px #0000000b;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  background:#000b;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+}
+.modal.open{display:flex}
+.tutorial{
+  width:min(900px,100%);
+  max-height:96dvh;
+  overflow:auto;
+  background:white;
+  border-radius:14px;
+  padding:16px;
+}
+.modalTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+.languages,.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.langBtn{background:#e9edf0;color:#222}
+.langBtn.active{background:#173d32;color:white}
+.closeBtn{background:#d93434;color:white}
+.videoStage{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  background:#000;
+  overflow:hidden;
+  border-radius:10px;
+}
+#player{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.gestureLayer{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:transparent;
+  touch-action:manipulation;
+}
+.videoControls{
+  position:absolute;
+  z-index:5;
+  top:10px;
+  left:10px;
+  right:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  pointer-events:none;
+}
+.videoControls button{pointer-events:auto}
+.fullBtn{background:#ffffffed;color:#111;font-weight:bold}
+.soundBtn{background:#e8bd62;color:#172b24;font-weight:bold}
+.fullExitBtn{
+  display:none;
+  position:absolute;
+  z-index:10;
+  top:12px;
+  right:12px;
+  background:#ffffffed;
+  color:#111;
+  font-weight:bold;
+}
+.videoStage:fullscreen,
+.videoStage:-webkit-full-screen{
+  width:100%;
+  height:100%;
+  aspect-ratio:auto;
+  border-radius:0;
+  background:#000;
+}
+.videoStage:fullscreen #player,
+.videoStage:-webkit-full-screen #player{
+  width:100%;
+  height:100%;
+}
+.videoStage:fullscreen .fullExitBtn,
+.videoStage:-webkit-full-screen .fullExitBtn{
+  display:block;
+}
+.status{
+  margin:12px 0;
+  font-size:14px;
+  color:#4b5563;
+  line-height:1.7;
+}
+.actions button{background:#173d32;color:white}
+.actions .secondary{background:#e9edf0;color:#222}
+.progressTrack{
+  height:7px;
+  background:#e5e7eb;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:8px;
+}
+.progressFill{
+  height:100%;
+  width:0%;
+  background:#d5a943;
+}
+.note{font-size:12px;color:#6b7280;margin-top:10px}
+@media(max-width:500px){
+  .tutorial{padding:10px}
+  .modalTop{align-items:flex-start}
+  button{padding:9px 11px}
 }
 </style>
 </head>
 
 <body>
-<div class="topbar">
-  <button class="help" id="helpBtn">❓ Help / مدد</button>
-</div>
+<header>
+  <strong>Driver Dashboard</strong>
+  <button class="helpBtn" id="helpBtn">Help / Tutorial</button>
+</header>
 
-<main class="page">
-  <h1>Driver Software Dashboard</h1>
-  <p>Test dashboard — use Help to open the tutorial.</p>
-  <div class="dashboard">
-    <div class="tile"><strong>New Invoice</strong><span>Create and manage invoices.</span></div>
-    <div class="tile"><strong>Charge Setup</strong><span>Manage charges and deductions.</span></div>
-    <div class="tile"><strong>Target Setup</strong><span>Set your earning target.</span></div>
-    <div class="tile"><strong>Leaves</strong><span>Manage leave records.</span></div>
-    <div class="tile"><strong>Reports</strong><span>Review your records.</span></div>
-    <div class="tile"><strong>Shift Summary</strong><span>Review shift performance.</span></div>
+<main class="dashboard">
+  <h2>Dashboard</h2>
+  <div class="cards">
+    <div class="card">New Invoice</div>
+    <div class="card">Charge Setup</div>
+    <div class="card">Target Setup</div>
+    <div class="card">Leaves</div>
+    <div class="card">Reports</div>
+    <div class="card">Shift Summary</div>
   </div>
 </main>
 
-<section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="title">
-  <div class="card">
-    <div class="header">
-      <h2 id="title">Driver Software Tutorial</h2>
-      <button class="close" id="closeBtn">✕ Close</button>
-    </div>
-
-    <div class="languages">
-      <button class="lang active" id="urduBtn">اردو</button>
-      <button class="lang" id="englishBtn">English</button>
-    </div>
-
-    <div class="frame" id="frame">
-      <div id="player"></div>
-      <div class="gesture" id="gesture" role="button" tabindex="0"
-           aria-label="Tap to play or pause. Double tap for fullscreen."></div>
-    </div>
-
-    <p class="status" id="status" aria-live="polite">Loading video...</p>
-
-    <div>
-      <div class="progress-label">
-        <span>Video progress</span>
-        <span id="percent">0%</span>
+<div class="modal" id="modal">
+  <section class="tutorial">
+    <div class="modalTop">
+      <div class="languages">
+        <button class="langBtn active" id="urduBtn">اردو</button>
+        <button class="langBtn" id="englishBtn">English</button>
       </div>
-      <div class="track"><div class="fill" id="fill"></div></div>
+      <button class="closeBtn" id="closeBtn">Close ✕</button>
     </div>
 
-    <div class="controls">
-      <button class="primary" id="playPauseBtn" disabled>▶ Play</button>
-      <button class="secondary" id="resumeBtn" disabled>↻ Resume</button>
-      <button class="secondary" id="fullscreenBtn">⛶ Fullscreen</button>
+    <div class="videoStage" id="videoStage">
+      <div id="player"></div>
+      <div class="gestureLayer" id="gestureLayer"></div>
+
+      <div class="videoControls">
+        <button class="soundBtn" id="soundBtn">🔊 آواز آن کریں</button>
+        <button class="fullBtn" id="fullBtn">⛶ Full Screen</button>
+      </div>
+
+      <button class="fullExitBtn" id="fullExitBtn">
+        ✕ Exit Full Screen
+      </button>
     </div>
 
-    <p class="hint">
-      Single tap: Play/Pause. Double tap: Fullscreen.
-      If sound does not start automatically, press Play.
-    </p>
-  </div>
-</section>
+    <div class="status" id="status">ویڈیو لوڈ ہو رہی ہے...</div>
+    <div class="progressTrack">
+      <div class="progressFill" id="progressFill"></div>
+    </div>
 
-<button class="exit-fullscreen" id="exitFullscreenBtn">✕ Exit Fullscreen</button>
+    <div class="actions" style="margin-top:14px">
+      <button id="playPauseBtn">▶ Play</button>
+      <button class="secondary" id="resumeBtn">Resume</button>
+    </div>
+
+    <div class="note">
+      نوٹ: موبائل براؤزر آٹو پلے پر آواز روک سکتا ہے۔ ایسی صورت میں
+      “آواز آن کریں” بٹن ایک بار دبائیں۔
+    </div>
+  </section>
+</div>
 
 <script>
-(() => {
-  "use strict";
+const VIDEOS = {
+  urdu: "xFGi__79snw",
+  english: "EVV4h_WpcUo"
+};
 
-  const videos = {
-    urdu: "xFGi__79snw",
-    english: "EVV4h_WpcUo"
-  };
+const STORAGE_KEY = "driverTutorialTestV5";
 
-  const KEY = "driverTutorialTestV4";
-  const $ = id => document.getElementById(id);
+const modal = document.getElementById("modal");
+const helpBtn = document.getElementById("helpBtn");
+const closeBtn = document.getElementById("closeBtn");
+const urduBtn = document.getElementById("urduBtn");
+const englishBtn = document.getElementById("englishBtn");
+const playPauseBtn = document.getElementById("playPauseBtn");
+const resumeBtn = document.getElementById("resumeBtn");
+const fullBtn = document.getElementById("fullBtn");
+const fullExitBtn = document.getElementById("fullExitBtn");
+const soundBtn = document.getElementById("soundBtn");
+const videoStage = document.getElementById("videoStage");
+const gestureLayer = document.getElementById("gestureLayer");
+const statusBox = document.getElementById("status");
+const progressFill = document.getElementById("progressFill");
 
-  const modal = $("modal");
-  const frame = $("frame");
-  const gesture = $("gesture");
-  const status = $("status");
-  const playPauseBtn = $("playPauseBtn");
-  const resumeBtn = $("resumeBtn");
-  const fill = $("fill");
-  const percent = $("percent");
-  const exitFullscreenBtn = $("exitFullscreenBtn");
+let player = null;
+let playerReady = false;
+let currentLanguage = "urdu";
+let progressTimer = null;
+let singleTapTimer = null;
+let lastSavedSecond = -1;
 
-  let player = null;
-  let ready = false;
-  let language = "urdu";
-  let duration = 0;
-  let lastTap = 0;
-  let tapTimer = null;
-  let saveTimer = null;
-  let userStarted = false;
-
-  let data = {
-    positions: { urdu: 0, english: 0 },
-    completed: { urdu: false, english: false }
-  };
-
-  function say(message) {
-    status.textContent = message;
-  }
-
-  function loadData() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-      if (saved.positions) {
-        data.positions.urdu = Math.max(0, Number(saved.positions.urdu) || 0);
-        data.positions.english = Math.max(0, Number(saved.positions.english) || 0);
+function readState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    return {
+      language: saved.language === "english" ? "english" : "urdu",
+      positions: {
+        urdu: Math.max(0, Number(saved.positions?.urdu) || 0),
+        english: Math.max(0, Number(saved.positions?.english) || 0)
       }
-      if (saved.completed) {
-        data.completed.urdu = !!saved.completed.urdu;
-        data.completed.english = !!saved.completed.english;
-      }
-    } catch (e) {}
+    };
+  }catch(e){
+    return {
+      language:"urdu",
+      positions:{urdu:0,english:0}
+    };
   }
+}
 
-  function saveData() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (e) {}
-  }
+let savedState = readState();
+currentLanguage = savedState.language;
 
-  function savePosition() {
-    if (!ready || !player) return;
-    try {
-      if (player.getPlayerState() !== YT.PlayerState.ENDED) {
-        data.positions[language] = Math.floor(player.getCurrentTime() || 0);
-      }
-      saveData();
-    } catch (e) {}
-  }
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      language: currentLanguage,
+      positions: savedState.positions
+    }));
+  }catch(e){}
+}
 
-  function updateProgress() {
-    if (!ready || !player) return;
-    try {
-      const current = player.getCurrentTime() || 0;
-      duration = player.getDuration() || duration;
-      const value = duration > 0
-        ? Math.min(100, Math.floor(current / duration * 100))
-        : 0;
-      fill.style.width = value + "%";
-      percent.textContent = value + "%";
-    } catch (e) {}
-  }
+function savedPosition(){
+  return Math.max(0, Math.floor(savedState.positions[currentLanguage] || 0));
+}
 
-  function updatePlayButton() {
-    if (!ready || !player) return;
+function updateLanguageButtons(){
+  urduBtn.classList.toggle("active", currentLanguage === "urdu");
+  englishBtn.classList.toggle("active", currentLanguage === "english");
+}
+
+function showStatus(message){
+  statusBox.textContent = message;
+}
+
+function openPopup(){
+  modal.classList.add("open");
+
+  if(playerReady && player){
     const state = player.getPlayerState();
-    playPauseBtn.textContent =
-      state === YT.PlayerState.PLAYING ? "⏸ Pause" : "▶ Play";
-  }
-
-  function playVideo() {
-    if (!ready || !player) return;
-    userStarted = true;
-    try {
-      player.unMute();
-      player.setVolume(100);
+    if(state === YT.PlayerState.PAUSED || state === YT.PlayerState.CUED){
       player.playVideo();
-      say("Video is playing.");
-    } catch (e) {
-      say("Unable to play. Please try again.");
     }
   }
+}
 
-  function pauseVideo() {
-    if (!ready || !player) return;
-    try {
-      player.pauseVideo();
-      savePosition();
-      say("Video paused.");
-    } catch (e) {}
+function closePopup(){
+  saveCurrentPosition();
+  stopProgressTimer();
+
+  if(document.fullscreenElement === videoStage){
+    document.exitFullscreen().catch(()=>{});
+  }else if(document.webkitFullscreenElement === videoStage &&
+           document.webkitExitFullscreen){
+    document.webkitExitFullscreen();
   }
 
-  function togglePlayPause() {
-    if (!ready || !player) {
-      say("Please wait for the video player.");
-      return;
-    }
-    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-      pauseVideo();
-    } else {
-      playVideo();
-    }
+  if(playerReady && player){
+    player.pauseVideo();
   }
 
-  function closePopup() {
-    // Stop playback before hiding the popup.
-    if (ready && player) {
-      savePosition();
-      player.pauseVideo();
-    }
-    modal.hidden = true;
-  }
+  modal.classList.remove("open");
+}
 
-  function openPopup() {
-    modal.hidden = false;
-    if (ready && player) {
-      say(data.completed[language]
-        ? "Tutorial completed before. Press Play to watch again."
-        : "Saved position: " + formatTime(data.positions[language]));
-    }
-  }
+function saveCurrentPosition(){
+  if(!playerReady || !player) return;
 
-  function formatTime(seconds) {
-    seconds = Math.max(0, Math.floor(Number(seconds) || 0));
-    return Math.floor(seconds / 60) + ":" +
-      String(seconds % 60).padStart(2, "0");
-  }
-
-  function changeLanguage(next) {
-    if (next === language) return;
-    savePosition();
-    language = next;
-
-    $("urduBtn").classList.toggle("active", language === "urdu");
-    $("englishBtn").classList.toggle("active", language === "english");
-
-    if (!ready || !player) return;
-
-    const startAt = data.completed[language] ? 0 : data.positions[language];
-
-    player.loadVideoById({
-      videoId: videos[language],
-      startSeconds: startAt
-    });
-
-    say(language === "urdu" ? "اردو ویڈیو منتخب ہوگئی ہے۔" : "English video selected.");
-  }
-
-  async function enterFullscreen() {
-    try {
-      if (document.fullscreenElement) return;
-      // Fullscreen the complete video frame, including the player.
-      if (frame.requestFullscreen) {
-        await frame.requestFullscreen();
-      } else {
-        say("Fullscreen is not supported in this browser.");
+  try{
+    const state = player.getPlayerState();
+    if(state !== YT.PlayerState.ENDED){
+      const seconds = Math.floor(player.getCurrentTime() || 0);
+      if(seconds >= 0){
+        savedState.positions[currentLanguage] = seconds;
       }
-    } catch (e) {
-      say("Use the Fullscreen button again, or try your browser's fullscreen control.");
     }
-  }
+    saveState();
+  }catch(e){}
+}
 
-  async function exitFullscreen() {
-    try {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        await document.exitFullscreen();
-      }
-    } catch (e) {}
-  }
+function startProgressTimer(){
+  stopProgressTimer();
 
-  function syncFullscreenButton() {
-    exitFullscreenBtn.classList.toggle(
-      "visible",
-      !!document.fullscreenElement
-    );
-  }
+  progressTimer = setInterval(()=>{
+    if(!playerReady || !player || !modal.classList.contains("open")) return;
 
-  function handleTap() {
-    const now = Date.now();
+    try{
+      const duration = player.getDuration() || 0;
+      const current = player.getCurrentTime() || 0;
+      const state = player.getPlayerState();
 
-    if (now - lastTap < 320) {
-      clearTimeout(tapTimer);
-      tapTimer = null;
-      lastTap = 0;
-      enterFullscreen();
-      return;
-    }
-
-    lastTap = now;
-    clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => {
-      tapTimer = null;
-      togglePlayPause();
-    }, 330);
-  }
-
-  window.onYouTubeIframeAPIReady = function() {
-    player = new YT.Player("player", {
-      videoId: videos[language],
-      playerVars: {
-        autoplay: 1,
-        controls: 0,
-        playsinline: 1,
-        enablejsapi: 1,
-        rel: 0,
-        origin: location.origin,
-        start: Math.floor(data.positions[language] || 0)
-      },
-      events: {
-        onReady: function() {
-          ready = true;
-          playPauseBtn.disabled = false;
-          resumeBtn.disabled = false;
-
-          // Muted autoplay is generally allowed by mobile browsers.
-          try {
-            player.mute();
-            player.playVideo();
-          } catch (e) {}
-
-          say("Video ready. Press Play to enable sound.");
-          updatePlayButton();
-
-          saveTimer = setInterval(() => {
-            if (!modal.hidden) {
-              savePosition();
-              updateProgress();
-              updatePlayButton();
-            }
-          }, 1000);
-        },
-
-        onStateChange: function(event) {
-          if (event.data === YT.PlayerState.PLAYING) {
-            say(player.isMuted()
-              ? "Playing silently. Press Play to enable sound."
-              : "Video playing with sound.");
-          }
-
-          if (event.data === YT.PlayerState.PAUSED) {
-            savePosition();
-            say("Video paused.");
-          }
-
-          if (event.data === YT.PlayerState.ENDED) {
-            data.completed[language] = true;
-            data.positions[language] = 0;
-            saveData();
-            fill.style.width = "100%";
-            percent.textContent = "100%";
-            say("Tutorial completed.");
-            setTimeout(closePopup, 1000);
-          }
-
-          updatePlayButton();
-        },
-
-        onError: function(event) {
-          const errors = {
-            2: "Invalid video ID.",
-            5: "Video could not play in the embedded player.",
-            100: "Video unavailable.",
-            101: "The owner does not allow embedded playback.",
-            150: "The owner does not allow embedded playback.",
-            153: "YouTube could not verify the embedded request. Try using the website's normal address."
-          };
-          say(errors[event.data] || "Video error: " + event.data);
+      if(state === YT.PlayerState.PLAYING){
+        const second = Math.floor(current);
+        if(second !== lastSavedSecond){
+          savedState.positions[currentLanguage] = second;
+          lastSavedSecond = second;
+          saveState();
         }
       }
+
+      progressFill.style.width = duration > 0
+        ? Math.min(100, current / duration * 100) + "%"
+        : "0%";
+
+      if(duration > 0){
+        showStatus(
+          (currentLanguage === "urdu" ? "اردو ٹیوٹوریل" : "English Tutorial") +
+          " — " + formatTime(current) + " / " + formatTime(duration)
+        );
+      }
+    }catch(e){}
+  },1000);
+}
+
+function stopProgressTimer(){
+  if(progressTimer){
+    clearInterval(progressTimer);
+    progressTimer = null;
+  }
+}
+
+function formatTime(value){
+  const s = Math.floor(value || 0);
+  return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+}
+
+function playWithSound(){
+  if(!playerReady || !player) return;
+
+  try{
+    player.unMute();
+    player.setVolume(100);
+    player.playVideo();
+    soundBtn.textContent = "🔊 آواز آن ہے";
+    showStatus("ویڈیو چل رہی ہے۔");
+  }catch(e){
+    showStatus("ویڈیو پر دوبارہ Play دبائیں۔");
+  }
+}
+
+function togglePlayPause(){
+  if(!playerReady || !player) return;
+
+  const state = player.getPlayerState();
+
+  if(state === YT.PlayerState.PLAYING){
+    saveCurrentPosition();
+    player.pauseVideo();
+    playPauseBtn.textContent = "▶ Play";
+  }else{
+    player.unMute();
+    player.setVolume(100);
+    player.playVideo();
+    playPauseBtn.textContent = "⏸ Pause";
+  }
+}
+
+function switchLanguage(language){
+  if(language === currentLanguage) return;
+
+  saveCurrentPosition();
+  currentLanguage = language;
+  savedState.language = language;
+  saveState();
+  updateLanguageButtons();
+  progressFill.style.width = "0%";
+  lastSavedSecond = -1;
+
+  if(playerReady && player){
+    showStatus("ویڈیو تبدیل ہو رہی ہے...");
+    player.loadVideoById({
+      videoId: VIDEOS[currentLanguage],
+      startSeconds: savedPosition()
     });
-  };
+    player.mute();
+    player.playVideo();
+    soundBtn.textContent = "🔊 آواز آن کریں";
+  }
+}
 
-  const api = document.createElement("script");
-  api.src = "https://www.youtube.com/iframe_api";
-  api.async = true;
-  document.head.appendChild(api);
+async function enterFullscreen(){
+  try{
+    if(videoStage.requestFullscreen){
+      await videoStage.requestFullscreen();
+    }else if(videoStage.webkitRequestFullscreen){
+      videoStage.webkitRequestFullscreen();
+    }else if(player && player.getIframe()){
+      player.getIframe().requestFullscreen?.();
+    }else{
+      showStatus("اس براؤزر میں فل اسکرین دستیاب نہیں۔");
+    }
+  }catch(e){
+    showStatus("فل اسکرین کے لیے دوبارہ بٹن دبائیں۔");
+  }
+}
 
-  $("helpBtn").addEventListener("click", openPopup);
-  $("closeBtn").addEventListener("click", closePopup);
-  playPauseBtn.addEventListener("click", togglePlayPause);
+async function exitFullscreen(){
+  try{
+    if(document.fullscreenElement && document.exitFullscreen){
+      await document.exitFullscreen();
+    }else if(document.webkitFullscreenElement && document.webkitExitFullscreen){
+      document.webkitExitFullscreen();
+    }
+  }catch(e){}
+}
 
-  resumeBtn.addEventListener("click", () => {
-    if (!ready || !player) return;
-    const startAt = data.completed[language] ? 0 : data.positions[language];
-    player.seekTo(startAt, true);
-    playVideo();
-  });
+function toggleFullscreen(){
+  if(document.fullscreenElement === videoStage ||
+     document.webkitFullscreenElement === videoStage){
+    exitFullscreen();
+  }else{
+    enterFullscreen();
+  }
+}
 
-  $("fullscreenBtn").addEventListener("click", enterFullscreen);
-  exitFullscreenBtn.addEventListener("click", exitFullscreen);
+helpBtn.addEventListener("click",openPopup);
+closeBtn.addEventListener("click",closePopup);
+playPauseBtn.addEventListener("click",togglePlayPause);
+resumeBtn.addEventListener("click",()=>{
+  if(!playerReady || !player) return;
+  player.seekTo(savedPosition(),true);
+  playWithSound();
+});
+soundBtn.addEventListener("click",playWithSound);
+fullBtn.addEventListener("click",toggleFullscreen);
+fullExitBtn.addEventListener("click",exitFullscreen);
+urduBtn.addEventListener("click",()=>switchLanguage("urdu"));
+englishBtn.addEventListener("click",()=>switchLanguage("english"));
 
-  $("urduBtn").addEventListener("click", () => changeLanguage("urdu"));
-  $("englishBtn").addEventListener("click", () => changeLanguage("english"));
+document.addEventListener("fullscreenchange",()=>{
+  fullBtn.textContent = document.fullscreenElement === videoStage
+    ? "⛶ Exit Full Screen"
+    : "⛶ Full Screen";
+});
 
-  gesture.addEventListener("pointerup", event => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    event.preventDefault();
-    handleTap();
-  });
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "hidden"){
+    saveCurrentPosition();
+  }
+});
 
-  gesture.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
+window.addEventListener("pagehide",saveCurrentPosition);
+window.addEventListener("beforeunload",saveCurrentPosition);
+
+/* Single tap = Play/Pause, double tap = toggle fullscreen */
+gestureLayer.addEventListener("click",()=>{
+  if(singleTapTimer){
+    clearTimeout(singleTapTimer);
+    singleTapTimer = null;
+    toggleFullscreen();
+  }else{
+    singleTapTimer = setTimeout(()=>{
+      singleTapTimer = null;
       togglePlayPause();
+    },280);
+  }
+});
+
+function loadYouTubeAPI(){
+  if(document.getElementById("youtubeIframeApi")) return;
+
+  const tag = document.createElement("script");
+  tag.id = "youtubeIframeApi";
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+}
+
+window.onYouTubeIframeAPIReady = function(){
+  player = new YT.Player("player",{
+    width:"100%",
+    height:"100%",
+    videoId: VIDEOS[currentLanguage],
+    playerVars:{
+      autoplay:1,
+      controls:0,
+      playsinline:1,
+      rel:0,
+      start:savedPosition(),
+      enablejsapi:1,
+      origin:location.origin
+    },
+    events:{
+      onReady:function(event){
+        playerReady = true;
+
+        /* Muted autoplay is more reliable on phones. */
+        event.target.mute();
+        event.target.playVideo();
+
+        updateLanguageButtons();
+        startProgressTimer();
+        showStatus("ویڈیو چل رہی ہے۔ آواز کے لیے آواز آن کریں دبائیں۔");
+      },
+      onStateChange:function(event){
+        if(event.data === YT.PlayerState.PLAYING){
+          playPauseBtn.textContent = "⏸ Pause";
+        }else if(event.data === YT.PlayerState.PAUSED){
+          playPauseBtn.textContent = "▶ Play";
+          saveCurrentPosition();
+        }else if(event.data === YT.PlayerState.ENDED){
+          savedState.positions[currentLanguage] = 0;
+          saveState();
+          progressFill.style.width = "100%";
+          showStatus("ٹیوٹوریل مکمل ہو گیا ہے۔");
+          playPauseBtn.textContent = "▶ Play";
+        }
+      },
+      onError:function(){
+        showStatus("ویڈیو لوڈ نہیں ہو سکی۔ انٹرنیٹ اور YouTube ویڈیو کی دستیابی چیک کریں۔");
+      },
+      onAutoplayBlocked:function(){
+        showStatus("آٹو پلے بلاک ہے۔ ویڈیو چلانے کے لیے Play یا آواز آن کریں دبائیں۔");
+      }
     }
   });
+};
 
-  document.addEventListener("fullscreenchange", syncFullscreenButton);
+updateLanguageButtons();
+loadYouTubeAPI();
 
-  window.addEventListener("pagehide", savePosition);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") savePosition();
-  });
-
-  loadData();
-  modal.hidden = false;
-})();
+/* Required behavior: automatically open on every page refresh. */
+window.addEventListener("load",()=>{
+  openPopup();
+});
 </script>
 </body>
 </html>
